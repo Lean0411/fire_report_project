@@ -1,0 +1,46 @@
+# Python 虛擬環境
+.venv/
+venv/
+ENV/
+
+# Python 快取檔案
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 發布/配置相關
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE 相關
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系統檔案
+.DS_Store
+Thumbs.db
+
+# 大型模型檔案
+models/gemma_27b/
+*.ckpt
+*.pt
+*.onnx
+*.tflite
+*.pb

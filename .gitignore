@@ -1,46 +1,55 @@
-# Python 虛擬環境
+# ===== Python 虛擬環境 =====
 .venv/
 venv/
 ENV/
 
-# Python 快取檔案
+# ===== Python 快取與編譯檔 =====
 __pycache__/
 *.py[cod]
 *$py.class
 
-# 發布/配置相關
-*.so
-.Python
+# ===== 發佈／建置檔案 =====
 build/
-develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
 wheels/
 *.egg-info/
 .installed.cfg
-*.egg
 
-# IDE 相關
+# ===== C 擴充套件、Python 庫 =====
+*.so
+.Python
+
+# ===== IDE 與編輯器檔案 =====
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# 系統檔案
+# ===== 作業系統檔案 =====
 .DS_Store
 Thumbs.db
 
-# 大型模型檔案
-models/gemma_27b/
-*.ckpt
+# ===== 模型權重與大型檔案 =====
+# 排除所有常見的深度學習權重檔
+*.pth
 *.pt
+*.ckpt
 *.onnx
 *.tflite
 *.pb
+
+# （若你希望只排除特定目錄，可啟用下面兩行）
+# models/gemma_27b/
+# models/fire_detection/
+
+# ===== 使用者上傳檔案 =====
+static/uploads/
+
+# ===== 日誌檔案 =====
+logs/

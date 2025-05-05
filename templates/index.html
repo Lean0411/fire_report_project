@@ -8,6 +8,10 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        // 將 Jinja 傳進來的對應表轉成 JS 物件
+        window.category_labels = {{ category_labels|tojson }};
+    </script>
     <style>
         :root {
             --primary-color: #4a90e2;
@@ -159,11 +163,21 @@
         .fade-out {
             animation: fadeOut 0.5s ease-out forwards;
         }
+
+        .llm-report {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
     <!-- 錯誤提示框 -->
-    <div class="alert alert-danger alert-float" id="errorAlert" role="alert">
+    <div class="alert alert-danger alert-float" id="errorAlert" role="alert" style="display:none;">
         <button type="button" class="btn-close" aria-label="Close" onclick="closeAlert()"></button>
         <span id="errorMessage"></span>
     </div>
@@ -229,65 +243,81 @@
                     <p class="mt-2">正在分析圖片，請稍候...</p>
                 </div>
 
-                {% if filename %}
-                <div class="card result-card">
+                {% if filename and result %}
+                <div class="card result-card mt-4">
                     <div class="card-body position-relative">
                         <button class="btn btn-outline-primary copy-btn" onclick="copyReport()">
                             <i class="fas fa-copy"></i> 複製報告
                         </button>
-                        
                         <h5 class="card-title mb-4">分析結果</h5>
-                        
-                        <div class="image-container text-center">
-                            <img src="{{ url_for('static', filename='uploads/annotated_' + filename) }}" 
+
+                        <!-- 標註後圖片 -->
+                        {% if filename and annotated %}
+                        <div class="image-container text-center mb-4">
+                            <img src="{{ url_for('static', filename='uploads/' + annotated) }}"
                                  alt="標註後的圖片" class="preview-image">
                         </div>
+                        {% endif %}
 
-                        {% if result %}
-                        <div id="reportContent">
-                            <div class="detection-info">
-                                <div class="alert {% if result.detection.is_fire %}alert-danger{% else %}alert-success{% endif %} mb-0 flex-grow-1">
-                                    <h6 class="mb-2">火災偵測結果:</h6>
-                                    <p class="mb-1">{{ result.detection.description }}</p>
+                        <!-- 偵測資訊 -->
+                        <div class="detection-info mb-4">
+                            <div class="alert {% if result.detection.is_fire %}alert-danger{% else %}alert-success{% endif %} w-100">
+                                <h6 class="mb-2">火災偵測結果:</h6>
+                                <p class="mb-1">{{ result.detection.description }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge confidence-badge bg-{% if result.detection.is_fire %}danger{% else %}success{% endif %}">
-                                        信心度: {{ "%.2f"|format(result.detection.confidence * 100) }}%
+                                        火災可能性: {{ result.detection.fire_probability }}%
+                                    </span>
+                                    <span class="badge confidence-badge bg-{% if result.detection.is_fire %}success{% else %}danger{% endif %}">
+                                        非火災可能性: {{ result.detection.no_fire_probability }}%
                                     </span>
                                 </div>
                             </div>
+                        </div>
 
-                            {% if result.recommendations %}
-                            <div class="recommendations">
-                                <h6 class="mb-3">建議行動方案:</h6>
-                                <div class="accordion" id="recommendationsAccordion">
-                                    {% for category, actions in result.recommendations.items() %}
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header">
-                                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" 
-                                                    type="button" 
-                                                    data-bs-toggle="collapse" 
-                                                    data-bs-target="#collapse{{ loop.index }}">
-                                                {{ category }}
-                                            </button>
-                                        </h2>
-                                        <div id="collapse{{ loop.index }}" 
-                                             class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
-                                             data-bs-parent="#recommendationsAccordion">
-                                            <div class="accordion-body">
-                                                {% for action in actions %}
-                                                <div class="action-item">
-                                                    <i class="fas fa-check-circle me-2 text-primary"></i>
-                                                    {{ action }}
-                                                </div>
-                                                {% endfor %}
+                        <!-- SOP 建議 -->
+                        {% if result.recommendations %}
+                        <div class="recommendations mb-4">
+                            <h6 class="mb-3">建議行動方案:</h6>
+                            <div class="accordion" id="recommendationsAccordion">
+                                {% for category, actions in result.recommendations.items() %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}"
+                                                aria-expanded="{% if loop.first %}true{% else %}false{% endif %}"
+                                                aria-controls="collapse{{ loop.index }}">
+                                            {{ category_labels[category] }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                                         aria-labelledby="heading{{ loop.index }}" data-bs-parent="#recommendationsAccordion">
+                                        <div class="accordion-body">
+                                            {% for action in actions %}
+                                            <div class="action-item">
+                                                <i class="fas fa-check-circle me-2 text-primary"></i>{{ action }}
                                             </div>
+                                            {% endfor %}
                                         </div>
                                     </div>
-                                    {% endfor %}
                                 </div>
+                                {% endfor %}
                             </div>
-                            {% endif %}
                         </div>
                         {% endif %}
+
+                        <!-- AI 行動建議報告 -->
+                        {% if result.llm_report %}
+                        <div class="card result-card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">AI 行動建議報告</h5>
+                                <div class="llm-report">
+                                    {{ result.llm_report }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
                     </div>
                 </div>
                 {% endif %}
@@ -297,257 +327,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('file');
-        const uploadForm = document.getElementById('uploadForm');
-        const progressContainer = document.querySelector('.progress-container');
-        const progressBar = document.querySelector('.progress-bar');
-        const previewContainer = document.getElementById('previewContainer');
-        const imagePreview = document.getElementById('imagePreview');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const submitBtn = document.getElementById('submitBtn');
-
-        // 錯誤處理函數
-        function showError(message, duration = 5000) {
-            const errorAlert = document.getElementById('errorAlert');
-            const errorMessage = document.getElementById('errorMessage');
-            
-            errorMessage.textContent = message;
-            errorAlert.style.display = 'block';
-            
-            setTimeout(() => {
-                errorAlert.classList.add('fade-out');
-                setTimeout(() => {
-                    errorAlert.style.display = 'none';
-                    errorAlert.classList.remove('fade-out');
-                }, 500);
-            }, duration);
-        }
-
-        function closeAlert() {
-            const errorAlert = document.getElementById('errorAlert');
-            errorAlert.classList.add('fade-out');
-            setTimeout(() => {
-                errorAlert.style.display = 'none';
-                errorAlert.classList.remove('fade-out');
-            }, 500);
-        }
-
-        // 拖放功能
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                if (validateFile(file)) {
-                    showPreview(file);
-                    fileInput.files = e.dataTransfer.files;
-                } else {
-                    showError('請上傳 JPG、PNG 或 JPEG 格式的圖片，檔案大小不可超過 16MB');
-                }
-            }
-        });
-
-        dropZone.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                if (validateFile(file)) {
-                    showPreview(file);
-                } else {
-                    showError('請上傳 JPG、PNG 或 JPEG 格式的圖片，檔案大小不可超過 16MB');
-                    fileInput.value = '';
-                }
-            }
-        });
-
-        function validateFile(file) {
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-            const maxSize = 16 * 1024 * 1024; // 16MB
-            return validTypes.includes(file.type) && file.size <= maxSize;
-        }
-
-        function showPreview(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                previewContainer.style.display = 'block';
-                dropZone.style.display = 'none';
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function removePreview() {
-            previewContainer.style.display = 'none';
-            dropZone.style.display = 'block';
-            fileInput.value = '';
-        }
-
-        // 改進的表單提交處理
-        uploadForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if (!fileInput.files[0]) {
-                showError('請選擇要上傳的圖片');
-                return;
-            }
-
-            const formData = new FormData(this);
-            const xhr = new XMLHttpRequest();
-
-            // 顯示進度條和載入動畫
-            progressContainer.style.display = 'block';
-            loadingSpinner.style.display = 'block';
-            submitBtn.disabled = true;
-
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percentComplete = (e.loaded / e.total) * 100;
-                    progressBar.style.width = percentComplete + '%';
-                    progressBar.textContent = percentComplete.toFixed(0) + '%';
-                    progressBar.setAttribute('aria-valuenow', percentComplete);
-                }
-            };
-
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    submitBtn.disabled = false;
-                    progressContainer.style.display = 'none';
-                    loadingSpinner.style.display = 'none';
-
-                    if (xhr.status === 200) {
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            if (response.success) {
-                                // 創建結果卡片
-                                const resultCard = createResultCard(response.data);
-                                
-                                // 找到或創建結果容器
-                                let resultContainer = document.querySelector('.result-container');
-                                if (!resultContainer) {
-                                    resultContainer = document.createElement('div');
-                                    resultContainer.className = 'result-container';
-                                    uploadForm.parentNode.appendChild(resultContainer);
-                                }
-                                
-                                // 清除舊的結果並添加新的
-                                resultContainer.innerHTML = '';
-                                resultContainer.appendChild(resultCard);
-                                
-                                // 重置上傳表單
-                                removePreview();
-                            } else {
-                                showError(response.error || '分析失敗，請稍後再試');
-                            }
-                        } catch (e) {
-                            showError('處理回應時發生錯誤');
-                        }
-                    } else {
-                        showError('上傳失敗，請稍後再試');
-                    }
-                }
-            };
-
-            xhr.onerror = function() {
-                showError('網路錯誤，請檢查您的網路連接');
-                submitBtn.disabled = false;
-                progressContainer.style.display = 'none';
-                loadingSpinner.style.display = 'none';
-            };
-
-            xhr.open('POST', '/api/detect', true);
-            xhr.send(formData);
-        });
-
-        // 創建結果卡片的輔助函數
-        function createResultCard(data) {
-            const card = document.createElement('div');
-            card.className = 'card result-card mt-4';
-            
-            // 處理建議內容
-            let recommendationsHtml = '';
-            if (data.recommendations && Object.keys(data.recommendations).length > 0) {
-                recommendationsHtml = `
-                    <div class="recommendations mt-4">
-                        <h6 class="mb-3">建議行動方案：</h6>
-                        <div class="accordion" id="recommendationsAccordion">
-                            ${Object.entries(data.recommendations).map(([category, actions], index) => `
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button ${index !== 0 ? 'collapsed' : ''}" 
-                                                type="button" 
-                                                data-bs-toggle="collapse" 
-                                                data-bs-target="#collapse${index}">
-                                            ${translateCategory(category)}
-                                        </button>
-                                    </h2>
-                                    <div id="collapse${index}" 
-                                         class="accordion-collapse collapse ${index === 0 ? 'show' : ''}"
-                                         data-bs-parent="#recommendationsAccordion">
-                                        <div class="accordion-body">
-                                            ${actions.map(action => `
-                                                <div class="action-item">
-                                                    <i class="fas fa-check-circle me-2 text-primary"></i>
-                                                    ${action}
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            card.innerHTML = `
-                <div class="card-body position-relative">
-                    <button class="btn btn-outline-primary copy-btn" onclick="copyReport()">
-                        <i class="fas fa-copy"></i> 複製報告
-                    </button>
-                    
-                    <h5 class="card-title mb-4">分析結果</h5>
-                    
-                    <div class="image-container text-center mb-4">
-                        <img src="/static/uploads/${data.filename}" 
-                             alt="上傳的圖片" class="preview-image">
-                    </div>
-
-                    <div id="reportContent">
-                        <div class="detection-info">
-                            <div class="alert ${data.detection.is_fire ? 'alert-danger' : 'alert-success'} mb-0 flex-grow-1">
-                                <h6 class="mb-2">火災偵測結果:</h6>
-                                <p class="mb-1">${data.detection.description}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge confidence-badge bg-${data.detection.is_fire ? 'danger' : 'success'}">
-                                        火災可能性: ${data.detection.fire_probability}%
-                                    </span>
-                                    <span class="badge confidence-badge bg-${data.detection.is_fire ? 'success' : 'danger'}">
-                                        非火災可能性: ${data.detection.no_fire_probability}%
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        ${recommendationsHtml}
-                    </div>
-                </div>
-            `;
-            return card;
-        }
-
-        // 翻譯分類名稱的輔助函數
+        // 實作 translateCategory 函數
         function translateCategory(category) {
             const translations = {
                 'emergency_action_plan': '緊急應變計畫',
@@ -565,28 +345,193 @@
             return translations[category] || category;
         }
 
-        // 優化報告複製功能
-        function copyReport() {
-            const detectionInfo = document.querySelector('.detection-info').innerText;
-            const recommendations = document.querySelector('.recommendations').innerText;
-            
-            const formattedReport = `# 火災偵測報告\n\n## 偵測結果\n${detectionInfo}\n\n## 建議行動方案\n${recommendations}`;
-            
-            navigator.clipboard.writeText(formattedReport).then(() => {
-                const copyBtn = document.querySelector('.copy-btn');
-                const originalHtml = copyBtn.innerHTML;
-                
-                copyBtn.innerHTML = '<i class="fas fa-check"></i> 已複製';
-                copyBtn.classList.add('btn-success');
-                copyBtn.classList.remove('btn-outline-primary');
-                
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalHtml;
-                    copyBtn.classList.remove('btn-success');
-                    copyBtn.classList.add('btn-outline-primary');
-                }, 2000);
-            });
+        // 新增關閉錯誤提示
+        function closeAlert() {
+            const alert = document.getElementById('errorAlert');
+            alert.style.display = 'none';
         }
+
+        // 1. 拖放與預覽
+  const dropZone       = document.getElementById('dropZone');
+  const fileInput      = document.getElementById('file');
+  const uploadForm     = document.getElementById('uploadForm');
+  const progressContainer = document.querySelector('.progress-container');
+  const progressBar    = document.querySelector('.progress-bar');
+  const previewContainer = document.getElementById('previewContainer');
+  const imagePreview      = document.getElementById('imagePreview');
+  const loadingSpinner    = document.getElementById('loadingSpinner');
+  const submitBtn         = document.getElementById('submitBtn');
+  
+  // 拖放效果
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (validateFile(file)) {
+      showPreview(file);
+      fileInput.files = e.dataTransfer.files;
+    } else showError('請上傳 JPG/PNG/JPEG，且小於16MB');
+  });
+  dropZone.addEventListener('click', () => fileInput.click());
+  
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (validateFile(file)) showPreview(file);
+    else showError('請上傳 JPG/PNG/JPEG，且小於16MB');
+  });
+  
+  function validateFile(file) {
+    const okType = ['image/jpeg','image/jpg','image/png'].includes(file.type);
+    return okType && file.size <= 16*1024*1024;
+  }
+  function showPreview(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      imagePreview.src = e.target.result;
+      previewContainer.style.display = 'block';
+      dropZone.style.display    = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+  function removePreview() {
+    previewContainer.style.display = 'none';
+    dropZone.style.display         = 'block';
+    fileInput.value = '';
+  }
+  
+  // 2. AJAX 上傳並取得結果
+  uploadForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!fileInput.files[0]) return showError('請先選一張圖片');
+  
+    const formData = new FormData(uploadForm);
+    const xhr      = new XMLHttpRequest();
+    xhr.open('POST','/api/detect', true);
+  
+    // 顯示進度
+    progressContainer.style.display = 'block';
+    loadingSpinner.style.display    = 'block';
+    submitBtn.disabled              = true;
+  
+    xhr.upload.onprogress = evt => {
+      if (evt.lengthComputable) {
+        const pct = Math.round(evt.loaded/evt.total * 100);
+        progressBar.style.width = pct + '%';
+        progressBar.textContent = pct + '%';
+      }
+    };
+  
+    xhr.onload = () => {
+      submitBtn.disabled = false;
+      progressContainer.style.display = 'none';
+      loadingSpinner.style.display    = 'none';
+  
+      if (xhr.status === 200) {
+        const resp = JSON.parse(xhr.responseText);
+        if (resp.success) {
+          // 動態新增結果卡片
+          let container = document.querySelector('.result-container');
+          if (!container) {
+            container = document.createElement('div');
+            container.className = 'result-container';
+            uploadForm.parentNode.appendChild(container);
+          }
+          container.innerHTML = '';
+          container.appendChild(createResultCard(resp.data));
+          removePreview();
+        } else {
+          showError(resp.error || '分析失敗');
+        }
+      } else {
+        showError('伺服器錯誤，請稍後再試');
+      }
+    };
+  
+    xhr.onerror = () => {
+      submitBtn.disabled = false;
+      progressContainer.style.display = 'none';
+      loadingSpinner.style.display    = 'none';
+      showError('網路錯誤，請檢查連線');
+    };
+  
+    xhr.send(formData);
+  });
+  
+  // 3. showError 函式
+  function showError(msg) {
+    const errorAlert   = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = msg;
+    errorAlert.style.display = 'block';
+    setTimeout(() => { errorAlert.classList.add('fade-out'); }, 3000);
+    setTimeout(() => { errorAlert.style.display='none'; errorAlert.classList.remove('fade-out'); }, 3500);
+  }
+  function createResultCard(data) {
+  const card = document.createElement('div');
+  card.className = 'card result-card mt-4';
+  card.innerHTML = `
+    <div class="card-body position-relative">
+      <button class="btn btn-outline-primary copy-btn" onclick="copyReport()">
+        <i class="fas fa-copy"></i> 複製報告
+      </button>
+      <h5 class="card-title mb-4">分析結果</h5>
+      <div class="image-container text-center mb-4">
+        <img src="/static/uploads/annotated_${data.filename}" class="preview-image">
+      </div>
+      <div class="detection-info mb-4">
+        <div class="alert ${data.detection.is_fire?'alert-danger':'alert-success'} w-100">
+          <h6 class="mb-2">火災偵測結果:</h6>
+          <p class="mb-1">${data.detection.description}</p>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge confidence-badge bg-${data.detection.is_fire?'danger':'success'}">
+              火災可能性: ${data.detection.fire_probability}%
+            </span>
+            <span class="badge confidence-badge bg-${data.detection.is_fire?'success':'danger'}">
+              非火災可能性: ${data.detection.no_fire_probability}%
+            </span>
+          </div>
+        </div>
+      </div>
+      ${data.recommendations ? `
+      <div class="recommendations mb-4">
+        <h6 class="mb-3">建議行動方案:</h6>
+        <div class="accordion" id="recommendationsAccordion">
+          ${Object.entries(data.recommendations).map(([cat,acts],i)=>`
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading${i}">
+                <button class="accordion-button ${i?'collapsed':''}" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#collapse${i}"
+                  aria-expanded="${i?'false':'true'}" aria-controls="collapse${i}">
+                  ${category_labels[cat]}
+                </button>
+              </h2>
+              <div id="collapse${i}" class="accordion-collapse collapse ${i?'':'show'}"
+                   data-bs-parent="#recommendationsAccordion">
+                <div class="accordion-body">
+                  ${acts.map(a=>`<div class="action-item"><i class="fas fa-check-circle me-2"></i>${a}</div>`).join('')}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : ''}
+      ${data.llm_report ? `
+      <div class="card result-card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">AI 行動建議報告</h5>
+          <div class="llm-report">${data.llm_report}</div>
+        </div>
+      </div>` : ''}
+    </div>
+  `;
+  return card;
+}
+
     </script>
 </body>
 </html>

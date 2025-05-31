@@ -20,8 +20,19 @@ app = create_app(config_class)
 print(f"==> run.py loaded; DEBUG={app.config['DEBUG']}")
 
 if __name__ == '__main__':
-    host = '0.0.0.0'
-    port = int(os.environ.get('PORT', 5000))
+    host = '127.0.0.1'
+    port = int(os.environ.get('PORT', 5001))
     debug = app.config.get('DEBUG', False)
+    
     print(f"==> Starting server at http://{host}:{port} (debug={debug})")
-    app.run(host=host, port=port, debug=debug)
+    print(f"==> 請在瀏覽器中訪問: http://127.0.0.1:{port}")
+    print(f"==> 或使用: http://localhost:{port}")
+    
+    # 明確設定所有參數，避免被覆蓋
+    app.run(
+        host=host,
+        port=port,
+        debug=debug,
+        threaded=True,
+        use_reloader=False  # 避免重載器可能造成的配置問題
+    )

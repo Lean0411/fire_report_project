@@ -3,175 +3,513 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>火災偵測系統</title>
+    <title>🔥 火災偵測系統</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    
     <script>
         // 將 Jinja 傳進來的對應表轉成 JS 物件
         window.category_labels = {{ category_labels|tojson }};
     </script>
+    
     <style>
         :root {
-            --primary-color: #4a90e2;
+            --primary-color: #ff6b35;
+            --secondary-color: #004e89;
             --success-color: #2ecc71;
             --danger-color: #e74c3c;
-            --warning-color: #f1c40f;
+            --warning-color: #f39c12;
             --text-color: #2c3e50;
-            --bg-color: #f5f6fa;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --fire-gradient: linear-gradient(45deg, #ff6b35, #ff8e53, #ff4757);
+            --safe-gradient: linear-gradient(45deg, #2ecc71, #27ae60, #00b894);
+        }
+        
+        * {
+            font-family: 'Noto Sans TC', sans-serif;
         }
         
         body {
-            background-color: var(--bg-color);
+            background: var(--gradient-bg);
+            min-height: 100vh;
             color: var(--text-color);
             line-height: 1.6;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: var(--card-shadow);
+            margin: 20px auto;
+            padding: 0;
+            overflow: hidden;
+            max-width: 900px;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #ff6b35, #ff8e53);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        .header-section h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header-section .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .upload-section {
+            padding: 40px;
+        }
+        
+        .upload-zone {
+            border: 3px dashed #ddd;
+            border-radius: 20px;
+            padding: 50px 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,107,53,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #fff5f2, #ffe8e0);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255,107,53,0.1);
+        }
+        
+        .upload-zone:hover::before {
+            left: 100%;
+        }
+        
+        .upload-zone.dragover {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #fff5f2, #ffe8e0);
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .preview-container {
+            margin: 30px 0;
+            text-align: center;
+            display: none;
         }
         
         .preview-image {
             max-width: 100%;
             max-height: 400px;
-            margin: 20px 0;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: transform 0.4s ease;
         }
         
         .preview-image:hover {
-            transform: scale(1.02);
+            transform: scale(1.05);
         }
         
-        .result-card {
-            margin-top: 20px;
-            border: none;
+        .form-select, .btn {
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        }
+        
+        .btn-submit {
+            background: var(--fire-gradient);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 15px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 107, 53, 0.4);
+        }
+        
+        .btn-submit:hover::before {
+            left: 100%;
+        }
+        
+        /* 火災偵測結果的特大按鈕樣式 */
+        .fire-detection-result {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .fire-alert-button {
+            display: inline-block;
+            padding: 25px 50px;
+            font-size: 2rem;
+            font-weight: 900;
+            border: none;
+            border-radius: 20px;
+            text-decoration: none;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+            min-width: 300px;
+            text-align: center;
+        }
+        
+        .fire-alert-button.fire-detected {
+            background: var(--fire-gradient);
+            animation: fireGlow 2s ease-in-out infinite;
+        }
+        
+        .fire-alert-button.no-fire-detected {
+            background: var(--safe-gradient);
+            animation: safeGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes fireGlow {
+            0%, 100% { 
+                box-shadow: 0 15px 35px rgba(231, 76, 60, 0.4),
+                           0 0 30px rgba(255, 107, 53, 0.6); 
+            }
+            50% { 
+                box-shadow: 0 20px 45px rgba(231, 76, 60, 0.6),
+                           0 0 50px rgba(255, 107, 53, 0.8); 
+            }
+        }
+        
+        @keyframes safeGlow {
+            0%, 100% { 
+                box-shadow: 0 15px 35px rgba(46, 204, 113, 0.3),
+                           0 0 25px rgba(46, 204, 113, 0.4); 
+            }
+            50% { 
+                box-shadow: 0 20px 45px rgba(46, 204, 113, 0.4),
+                           0 0 35px rgba(46, 204, 113, 0.5); 
+            }
+        }
+        
+        .fire-alert-button .icon {
+            margin-right: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .confidence-display {
+            display: flex;
+            justify-content: space-around;
+            margin: 25px 0;
+            gap: 20px;
+        }
+        
+        .confidence-card {
             background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            flex: 1;
+            transition: transform 0.3s ease;
+        }
+        
+        .confidence-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .confidence-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+        
+        .confidence-value.fire { color: var(--danger-color); }
+        .confidence-value.safe { color: var(--success-color); }
+        
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            margin: 30px 0;
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .recommendations {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 30px;
+            border-radius: 20px;
+            margin: 25px 0;
+        }
+        
+        .accordion-item {
+            border: none;
+            border-radius: 12px !important;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .accordion-button {
+            border-radius: 12px !important;
+            font-weight: 600;
+            color: var(--text-color);
+            background: white;
+            border: none;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background: var(--primary-color);
+            color: white;
         }
         
         .action-item {
-            padding: 12px 16px;
-            margin: 8px 0;
-            background-color: white;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-color);
-            transition: transform 0.2s ease;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
         }
         
         .action-item:hover {
-            transform: translateX(5px);
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .llm-report {
+            white-space: pre-wrap;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid var(--primary-color);
+            margin: 20px 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            line-height: 1.8;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .loading-spinner {
+            display: none;
+            margin: 40px auto;
+            text-align: center;
+        }
+        
+        .spinner-custom {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress {
+            height: 12px;
+            border-radius: 6px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: var(--fire-gradient);
+            transition: width 0.3s ease;
+        }
+        
+        .alert-float {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 350px;
+            max-width: 500px;
+            display: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
         .copy-btn {
             position: absolute;
             right: 20px;
             top: 20px;
+            border-radius: 10px;
             transition: all 0.3s ease;
         }
         
-        .detection-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin: 20px 0;
+        .copy-btn:hover {
+            transform: scale(1.05);
         }
         
-        .confidence-badge {
-            font-size: 1.1em;
-            padding: 8px 15px;
-            border-radius: 20px;
-        }
-        
-        .help-text {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        
-        .upload-zone {
-            border: 2px dashed #ccc;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            background: #fafafa;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .upload-zone:hover {
-            border-color: var(--primary-color);
-            background: #f0f0f0;
-        }
-        
-        .upload-zone.dragover {
-            border-color: var(--primary-color);
-            background: #e3f2fd;
-        }
-        
-        .loading-spinner {
-            display: none;
-            margin: 20px auto;
-        }
-        
-        .progress-container {
-            margin: 15px 0;
-            display: none;
-        }
-        
-        .preview-container {
-            margin: 15px 0;
-            text-align: center;
-            display: none;
-        }
-        
+        /* 響應式設計 */
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
+            .main-container {
+                margin: 10px;
+                border-radius: 20px;
             }
             
-            .preview-image {
-                max-height: 300px;
+            .header-section {
+                padding: 30px 20px;
             }
             
-            .action-item {
-                padding: 10px;
+            .header-section h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-section {
+                padding: 30px 20px;
+            }
+            
+            .upload-zone {
+                padding: 40px 20px;
+            }
+            
+            .fire-alert-button {
+                padding: 20px 30px;
+                font-size: 1.5rem;
+                min-width: 250px;
+            }
+            
+            .confidence-display {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .confidence-value {
+                font-size: 2rem;
             }
         }
-
-        .alert-float {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-            min-width: 300px;
-            max-width: 500px;
-            display: none;
+        
+        /* 新增動畫效果 */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
         }
         
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
-        .fade-out {
-            animation: fadeOut 0.5s ease-out forwards;
+        .bounce-in {
+            animation: bounceIn 0.8s ease-out;
         }
-
-        .llm-report {
-            white-space: pre-wrap;
-            font-family: monospace;
-            background-color: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-color);
-            margin-top: 1rem;
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     </style>
 </head>
@@ -182,356 +520,403 @@
         <span id="errorMessage"></span>
     </div>
 
-    <div class="container py-5">
-        <h1 class="text-center mb-4">火災偵測與報告系統</h1>
-        
-        {% if error %}
-        <div class="alert alert-danger">
-            {{ error }}
-        </div>
-        {% endif %}
-
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <form method="POST" enctype="multipart/form-data" id="uploadForm">
-                            <div class="upload-zone" id="dropZone">
-                                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
-                                <h5>將圖片拖曳至此處或點擊選擇檔案</h5>
-                                <p class="help-text">支援的格式：JPG、PNG、JPEG，檔案大小限制：16MB</p>
-                                <input type="file" class="form-control d-none" id="file" name="file" accept="image/*" required>
-                            </div>
-                            
-                            <div class="preview-container" id="previewContainer">
-                                <img id="imagePreview" class="preview-image" src="" alt="預覽圖">
-                                <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removePreview()">
-                                    <i class="fas fa-times"></i> 移除圖片
-                                </button>
-                            </div>
-                            
-                            <div class="progress-container">
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                         role="progressbar" style="width: 0%" 
-                                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="role" class="form-label">選擇身份</label>
-                                <select class="form-select" id="role" name="role" required>
-                                    <option value="" disabled selected>請選擇您的身份</option>
-                                    <option value="general">一般民眾</option>
-                                    <option value="firefighter">消防隊員</option>
-                                    <option value="management">管理單位</option>
-                                </select>
-                                <p class="help-text">請選擇您的身份，系統將提供更符合您需求的建議方案</p>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100" id="submitBtn">
-                                <i class="fas fa-upload me-2"></i>上傳並分析
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                
-                <div class="loading-spinner text-center" id="loadingSpinner">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">分析中...</span>
-                    </div>
-                    <p class="mt-2">正在分析圖片，請稍候...</p>
-                </div>
-
-                {% if filename and result %}
-                <div class="card result-card mt-4">
-                    <div class="card-body position-relative">
-                        <button class="btn btn-outline-primary copy-btn" onclick="copyReport()">
-                            <i class="fas fa-copy"></i> 複製報告
-                        </button>
-                        <h5 class="card-title mb-4">分析結果</h5>
-
-                        <!-- 標註後圖片 -->
-                        {% if filename and annotated %}
-                        <div class="image-container text-center mb-4">
-                            <img src="{{ url_for('static', filename='uploads/' + annotated) }}"
-                                 alt="標註後的圖片" class="preview-image">
-                        </div>
-                        {% endif %}
-
-                        <!-- 偵測資訊 -->
-                        <div class="detection-info mb-4">
-                            <div class="alert {% if result.detection.is_fire %}alert-danger{% else %}alert-success{% endif %} w-100">
-                                <h6 class="mb-2">火災偵測結果:</h6>
-                                <p class="mb-1">{{ result.detection.description }}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge confidence-badge bg-{% if result.detection.is_fire %}danger{% else %}success{% endif %}">
-                                        火災可能性: {{ result.detection.fire_probability }}%
-                                    </span>
-                                    <span class="badge confidence-badge bg-{% if result.detection.is_fire %}success{% else %}danger{% endif %}">
-                                        非火災可能性: {{ result.detection.no_fire_probability }}%
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- SOP 建議 -->
-                        {% if result.recommendations %}
-                        <div class="recommendations mb-4">
-                            <h6 class="mb-3">建議行動方案:</h6>
-                            <div class="accordion" id="recommendationsAccordion">
-                                {% for category, actions in result.recommendations.items() %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="heading{{ loop.index }}">
-                                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}"
-                                                aria-expanded="{% if loop.first %}true{% else %}false{% endif %}"
-                                                aria-controls="collapse{{ loop.index }}">
-                                            {{ category_labels[category] }}
-                                        </button>
-                                    </h2>
-                                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
-                                         aria-labelledby="heading{{ loop.index }}" data-bs-parent="#recommendationsAccordion">
-                                        <div class="accordion-body">
-                                            {% for action in actions %}
-                                            <div class="action-item">
-                                                <i class="fas fa-check-circle me-2 text-primary"></i>{{ action }}
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        <!-- AI 行動建議報告 -->
-                        {% if result.llm_report %}
-                        <div class="card result-card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">AI 行動建議報告</h5>
-                                <div class="llm-report">
-                                    {{ result.llm_report }}
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                    </div>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- 標題區塊 -->
+            <div class="header-section">
+                <h1><i class="fas fa-fire"></i> 火災偵測系統</h1>
+                <p class="subtitle">AI 智能火災識別 × 專業應變建議</p>
+            </div>
+            
+            <!-- 上傳區塊 -->
+            <div class="upload-section">
+                {% if error %}
+                <div class="alert alert-danger fade-in">
+                    {{ error }}
                 </div>
                 {% endif %}
+
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="upload-zone" id="dropZone">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h4 style="margin-bottom: 15px;">拖曳圖片至此處或點擊選擇</h4>
+                        <p class="text-muted">支援格式：JPG、PNG、JPEG | 檔案大小：最大 16MB</p>
+                        <input type="file" class="form-control d-none" id="file" name="file" accept="image/*" required>
+                    </div>
+                    
+                    <div class="preview-container" id="previewContainer">
+                        <img id="imagePreview" class="preview-image" src="" alt="預覽圖">
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-danger" onclick="removePreview()">
+                                <i class="fas fa-times me-2"></i>移除圖片
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%" 
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                        </div>
+                        <p class="text-center mt-2 text-muted">正在上傳分析中...</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="role" class="form-label fs-5 fw-bold">
+                            <i class="fas fa-user-tag me-2"></i>選擇您的身份
+                        </label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="" disabled selected>請選擇您的身份角色</option>
+                            <option value="general">👨‍👩‍👧‍👦 一般民眾</option>
+                            <option value="firefighter">🚒 消防隊員</option>
+                            <option value="management">🏢 管理單位</option>
+                        </select>
+                        <p class="help-text text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            系統將根據您的身份提供專業的應變建議
+                        </p>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-submit w-100" id="submitBtn">
+                            <i class="fas fa-fire-alt me-2"></i>開始火災偵測分析
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-custom mx-auto"></div>
+                    <h5 class="mt-3">🔍 AI 正在分析圖片...</h5>
+                    <p class="text-muted">請稍候，分析需要幾秒鐘</p>
+                </div>
+
+                <!-- 結果顯示區域 -->
+                <div class="result-container"></div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/enhanced-effects.js') }}"></script>
     <script>
         // 實作 translateCategory 函數
         function translateCategory(category) {
-            const translations = {
-                'emergency_action_plan': '緊急應變計畫',
-                'evacuation_preparedness': '疏散準備',
-                'shelter_in_place': '就地避難',
-                'initial_assessment': '初步評估',
-                'incident_command': '事件指揮',
-                'tactical_operations': '戰術行動',
-                'personnel_safety': '人員安全',
-                'emergency_management_protocols': '緊急管理協定',
-                'resource_allocation': '資源分配',
-                'communication_coordination': '通訊協調',
-                'resilience_and_recovery': '韌性與復原'
-            };
-            return translations[category] || category;
+            return window.category_labels[category] || category;
         }
 
-        // 新增關閉錯誤提示
+        // 關閉錯誤提示
         function closeAlert() {
-            const alert = document.getElementById('errorAlert');
-            alert.style.display = 'none';
+            document.getElementById('errorAlert').style.display = 'none';
         }
 
-        // 1. 拖放與預覽
-  const dropZone       = document.getElementById('dropZone');
-  const fileInput      = document.getElementById('file');
-  const uploadForm     = document.getElementById('uploadForm');
-  const progressContainer = document.querySelector('.progress-container');
-  const progressBar    = document.querySelector('.progress-bar');
-  const previewContainer = document.getElementById('previewContainer');
-  const imagePreview      = document.getElementById('imagePreview');
-  const loadingSpinner    = document.getElementById('loadingSpinner');
-  const submitBtn         = document.getElementById('submitBtn');
-  
-  // 拖放效果
-  dropZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-  });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (validateFile(file)) {
-      showPreview(file);
-      fileInput.files = e.dataTransfer.files;
-    } else showError('請上傳 JPG/PNG/JPEG，且小於16MB');
-  });
-  dropZone.addEventListener('click', () => fileInput.click());
-  
-  fileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (validateFile(file)) showPreview(file);
-    else showError('請上傳 JPG/PNG/JPEG，且小於16MB');
-  });
-  
-  function validateFile(file) {
-    const okType = ['image/jpeg','image/jpg','image/png'].includes(file.type);
-    return okType && file.size <= 16*1024*1024;
-  }
-  function showPreview(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      imagePreview.src = e.target.result;
-      previewContainer.style.display = 'block';
-      dropZone.style.display    = 'none';
-    };
-    reader.readAsDataURL(file);
-  }
-  function removePreview() {
-    previewContainer.style.display = 'none';
-    dropZone.style.display         = 'block';
-    fileInput.value = '';
-  }
-  
-  // 2. AJAX 上傳並取得結果
-  uploadForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if (!fileInput.files[0]) return showError('請先選一張圖片');
-  
-    const formData = new FormData(uploadForm);
-    const xhr      = new XMLHttpRequest();
-    xhr.open('POST','/api/detect', true);
-  
-    // 顯示進度
-    progressContainer.style.display = 'block';
-    loadingSpinner.style.display    = 'block';
-    submitBtn.disabled              = true;
-  
-    xhr.upload.onprogress = evt => {
-      if (evt.lengthComputable) {
-        const pct = Math.round(evt.loaded/evt.total * 100);
-        progressBar.style.width = pct + '%';
-        progressBar.textContent = pct + '%';
-      }
-    };
-  
-    xhr.onload = () => {
-      submitBtn.disabled = false;
-      progressContainer.style.display = 'none';
-      loadingSpinner.style.display    = 'none';
-  
-      if (xhr.status === 200) {
-        const resp = JSON.parse(xhr.responseText);
-        if (resp.success) {
-          // 動態新增結果卡片
-          let container = document.querySelector('.result-container');
-          if (!container) {
-            container = document.createElement('div');
-            container.className = 'result-container';
-            uploadForm.parentNode.appendChild(container);
-          }
-          container.innerHTML = '';
-          container.appendChild(createResultCard(resp.data));
-          removePreview();
-        } else {
-          showError(resp.error || '分析失敗');
+        // DOM 元素
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('file');
+        const uploadForm = document.getElementById('uploadForm');
+        const progressContainer = document.querySelector('.progress-container');
+        const progressBar = document.querySelector('.progress-bar');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // 拖放事件處理
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (validateFile(file)) {
+                showPreview(file);
+                fileInput.files = e.dataTransfer.files;
+            } else {
+                showError('請上傳 JPG/PNG/JPEG 格式的圖片，且檔案大小不超過 16MB');
+            }
+        });
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (validateFile(file)) {
+                showPreview(file);
+            } else {
+                showError('請上傳 JPG/PNG/JPEG 格式的圖片，且檔案大小不超過 16MB');
+            }
+        });
+        
+        // 檔案驗證
+        function validateFile(file) {
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            return validTypes.includes(file.type) && file.size <= 16 * 1024 * 1024;
         }
-      } else {
-        showError('伺服器錯誤，請稍後再試');
-      }
-    };
-  
-    xhr.onerror = () => {
-      submitBtn.disabled = false;
-      progressContainer.style.display = 'none';
-      loadingSpinner.style.display    = 'none';
-      showError('網路錯誤，請檢查連線');
-    };
-  
-    xhr.send(formData);
-  });
-  
-  // 3. showError 函式
-  function showError(msg) {
-    const errorAlert   = document.getElementById('errorAlert');
-    const errorMessage = document.getElementById('errorMessage');
-    errorMessage.textContent = msg;
-    errorAlert.style.display = 'block';
-    setTimeout(() => { errorAlert.classList.add('fade-out'); }, 3000);
-    setTimeout(() => { errorAlert.style.display='none'; errorAlert.classList.remove('fade-out'); }, 3500);
-  }
-  function createResultCard(data) {
-  const card = document.createElement('div');
-  card.className = 'card result-card mt-4';
-  card.innerHTML = `
-    <div class="card-body position-relative">
-      <button class="btn btn-outline-primary copy-btn" onclick="copyReport()">
-        <i class="fas fa-copy"></i> 複製報告
-      </button>
-      <h5 class="card-title mb-4">分析結果</h5>
-      <div class="image-container text-center mb-4">
-        <img src="/static/uploads/annotated_${data.filename}" class="preview-image">
-      </div>
-      <div class="detection-info mb-4">
-        <div class="alert ${data.detection.is_fire?'alert-danger':'alert-success'} w-100">
-          <h6 class="mb-2">火災偵測結果:</h6>
-          <p class="mb-1">${data.detection.description}</p>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="badge confidence-badge bg-${data.detection.is_fire?'danger':'success'}">
-              火災可能性: ${data.detection.fire_probability}%
-            </span>
-            <span class="badge confidence-badge bg-${data.detection.is_fire?'success':'danger'}">
-              非火災可能性: ${data.detection.no_fire_probability}%
-            </span>
-          </div>
-        </div>
-      </div>
-      ${data.recommendations ? `
-      <div class="recommendations mb-4">
-        <h6 class="mb-3">建議行動方案:</h6>
-        <div class="accordion" id="recommendationsAccordion">
-          ${Object.entries(data.recommendations).map(([cat,acts],i)=>`
-            <div class="accordion-item">
-              <h2 class="accordion-header" id="heading${i}">
-                <button class="accordion-button ${i?'collapsed':''}" type="button"
-                  data-bs-toggle="collapse" data-bs-target="#collapse${i}"
-                  aria-expanded="${i?'false':'true'}" aria-controls="collapse${i}">
-                  ${category_labels[cat]}
-                </button>
-              </h2>
-              <div id="collapse${i}" class="accordion-collapse collapse ${i?'':'show'}"
-                   data-bs-parent="#recommendationsAccordion">
-                <div class="accordion-body">
-                  ${acts.map(a=>`<div class="action-item"><i class="fas fa-check-circle me-2"></i>${a}</div>`).join('')}
+        
+        // 顯示預覽
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                imagePreview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                previewContainer.classList.add('bounce-in');
+                dropZone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 移除預覽
+        function removePreview() {
+            previewContainer.style.display = 'none';
+            dropZone.style.display = 'block';
+            fileInput.value = '';
+        }
+        
+        // 表單提交處理
+        uploadForm.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            if (!fileInput.files[0]) {
+                showError('請先選擇一張圖片');
+                return;
+            }
+            
+            const formData = new FormData(uploadForm);
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/detect', true);
+            
+            // 顯示載入狀態
+            progressContainer.style.display = 'block';
+            loadingSpinner.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>分析中...';
+            
+            // 上傳進度
+            xhr.upload.onprogress = evt => {
+                if (evt.lengthComputable) {
+                    const percentage = Math.round((evt.loaded / evt.total) * 100);
+                    progressBar.style.width = percentage + '%';
+                    progressBar.textContent = percentage + '%';
+                }
+            };
+            
+            // 完成處理
+            xhr.onload = () => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-fire-alt me-2"></i>開始火災偵測分析';
+                progressContainer.style.display = 'none';
+                loadingSpinner.style.display = 'none';
+                
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        displayResults(response.data);
+                        removePreview();
+                    } else {
+                        showError(response.error || '分析失敗，請重試');
+                    }
+                } else {
+                    showError('伺服器錯誤，請稍後再試');
+                }
+            };
+            
+            // 錯誤處理
+            xhr.onerror = () => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-fire-alt me-2"></i>開始火災偵測分析';
+                progressContainer.style.display = 'none';
+                loadingSpinner.style.display = 'none';
+                showError('網路錯誤，請檢查連線狀態');
+            };
+            
+            xhr.send(formData);
+        });
+        
+        // 顯示錯誤訊息
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+            errorAlert.classList.add('fade-in');
+            
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+                errorAlert.classList.remove('fade-in');
+            }, 5000);
+        }
+        
+        // 顯示分析結果
+        function displayResults(data) {
+            const container = document.querySelector('.result-container');
+            container.innerHTML = '';
+            
+            const resultCard = document.createElement('div');
+            resultCard.className = 'result-card fade-in';
+            
+            const isFireDetected = data.detection.is_fire;
+            const fireButtonClass = isFireDetected ? 'fire-detected' : 'no-fire-detected';
+            const iconClass = isFireDetected ? 'fas fa-fire' : 'fas fa-shield-alt';
+            const resultText = isFireDetected ? '🔥 偵測到火災！' : '✅ 未偵測到火災';
+            
+            resultCard.innerHTML = `
+                <div class="card-body position-relative">
+                    <button class="btn btn-outline-primary copy-btn" onclick="copyReport()">
+                        <i class="fas fa-copy me-2"></i>複製報告
+                    </button>
+                    
+                    <h4 class="text-center mb-4">🔍 分析結果</h4>
+                    
+                    ${data.filename ? `
+                    <div class="text-center mb-4">
+                        <img src="/static/uploads/annotated_${data.filename}" 
+                             alt="分析結果圖" class="preview-image">
+                    </div>
+                    ` : ''}
+                    
+                    <div class="fire-detection-result">
+                        <div class="fire-alert-button ${fireButtonClass} bounce-in">
+                            <i class="${iconClass} icon"></i>
+                            ${resultText}
+                        </div>
+                    </div>
+                    
+                    <div class="confidence-display">
+                        <div class="confidence-card">
+                            <div class="text-muted">火災可能性</div>
+                            <div class="confidence-value fire">${data.detection.fire_probability}%</div>
+                        </div>
+                        <div class="confidence-card">
+                            <div class="text-muted">安全可能性</div>
+                            <div class="confidence-value safe">${data.detection.no_fire_probability}%</div>
+                        </div>
+                    </div>
+                    
+                    ${data.recommendations && Object.keys(data.recommendations).length > 0 ? `
+                    <div class="recommendations">
+                        <h5 class="mb-4">
+                            <i class="fas fa-clipboard-list me-2"></i>專業建議方案
+                        </h5>
+                        <div class="accordion" id="recommendationsAccordion">
+                            ${Object.entries(data.recommendations).map(([category, actions], index) => `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading${index}">
+                                        <button class="accordion-button ${index !== 0 ? 'collapsed' : ''}" 
+                                                type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse${index}"
+                                                aria-expanded="${index === 0 ? 'true' : 'false'}" 
+                                                aria-controls="collapse${index}">
+                                            <i class="fas fa-chevron-right me-2"></i>
+                                            ${translateCategory(category)}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse${index}" 
+                                         class="accordion-collapse collapse ${index === 0 ? 'show' : ''}"
+                                         aria-labelledby="heading${index}" 
+                                         data-bs-parent="#recommendationsAccordion">
+                                        <div class="accordion-body">
+                                            ${actions.map(action => `
+                                                <div class="action-item">
+                                                    <i class="fas fa-check-circle me-3 text-success"></i>
+                                                    ${action}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.llm_report ? `
+                    <div class="mt-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-robot me-2"></i>AI 智能分析報告
+                        </h5>
+                        <div class="llm-report">${data.llm_report}</div>
+                    </div>
+                    ` : ''}
                 </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>` : ''}
-      ${data.llm_report ? `
-      <div class="card result-card mb-4">
-        <div class="card-body">
-          <h5 class="card-title">AI 行動建議報告</h5>
-          <div class="llm-report">${data.llm_report}</div>
-        </div>
-      </div>` : ''}
-    </div>
-  `;
-  return card;
-}
-
+            `;
+            
+            container.appendChild(resultCard);
+            
+            // 滾動到結果區域
+            setTimeout(() => {
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+        
+        // 複製報告功能
+        function copyReport() {
+            const resultCard = document.querySelector('.result-card');
+            if (!resultCard) return;
+            
+            let reportText = '🔥 火災偵測分析報告\n';
+            reportText += '========================\n\n';
+            
+            // 提取檢測結果
+            const fireButton = resultCard.querySelector('.fire-alert-button');
+            if (fireButton) {
+                reportText += '🔍 偵測結果：' + fireButton.textContent.trim() + '\n\n';
+            }
+            
+            // 提取信心度
+            const confidenceCards = resultCard.querySelectorAll('.confidence-card');
+            confidenceCards.forEach(card => {
+                const label = card.querySelector('.text-muted').textContent;
+                const value = card.querySelector('.confidence-value').textContent;
+                reportText += `${label}：${value}\n`;
+            });
+            reportText += '\n';
+            
+            // 提取建議
+            const recommendations = resultCard.querySelector('.recommendations');
+            if (recommendations) {
+                reportText += '📋 專業建議方案：\n';
+                const actionItems = recommendations.querySelectorAll('.action-item');
+                actionItems.forEach(item => {
+                    reportText += '• ' + item.textContent.trim() + '\n';
+                });
+                reportText += '\n';
+            }
+            
+            // 提取 AI 報告
+            const llmReport = resultCard.querySelector('.llm-report');
+            if (llmReport) {
+                reportText += '🤖 AI 智能分析：\n';
+                reportText += llmReport.textContent.trim() + '\n\n';
+            }
+            
+            reportText += '報告生成時間：' + new Date().toLocaleString('zh-TW');
+            
+            navigator.clipboard.writeText(reportText).then(() => {
+                // 顯示複製成功提示
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check me-2"></i>已複製！';
+                copyBtn.classList.add('btn-success');
+                copyBtn.classList.remove('btn-outline-primary');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('btn-success');
+                    copyBtn.classList.add('btn-outline-primary');
+                }, 2000);
+            }).catch(() => {
+                showError('複製失敗，請手動選取文字複製');
+            });
+        }
     </script>
 </body>
 </html>

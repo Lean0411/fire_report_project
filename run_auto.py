@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-火災偵測系統啟動腳本 (自動清理端口佔用)
+火災偵測系統自動啟動腳本 (完全自動化版本)
 """
 
 import sys
@@ -119,7 +119,7 @@ def auto_handle_port_conflict(host, port, max_retries=3):
     
     return False
 
-print("🔥 火災偵測系統啟動中...")
+print("🔥 火災偵測系統自動啟動中...")
 
 try:
     # 直接導入app.py中的Flask實例
@@ -148,7 +148,7 @@ if __name__ == '__main__':
             print("❌ 無法自動解決端口衝突")
             print(f"💡 建議：")
             print(f"   1. 手動執行: sudo netstat -tulpn | grep :{port}")
-            print(f"   2. 或使用其他端口: PORT=5003 python run.py")
+            print(f"   2. 或使用其他端口: PORT=5003 python run_auto.py")
             sys.exit(1)
     else:
         print(f"✅ 端口 {port} 可用")
@@ -174,4 +174,4 @@ if __name__ == '__main__':
         sys.exit(1)
     except KeyboardInterrupt:
         print(f"\n👋 用戶中斷，系統已關閉")
-        sys.exit(0)
+        sys.exit(0) 

@@ -441,6 +441,13 @@
             transform: scale(1.05);
         }
         
+        .keyword-highlight {
+            background: #fff3cd;
+            color: #856404;
+            padding: 1px 4px;
+            font-weight: 500;
+        }
+        
         /* 響應式設計 */
         @media (max-width: 768px) {
             .main-container {
@@ -691,6 +698,10 @@
             }
             
             const formData = new FormData(uploadForm);
+            // 自動啟用 AI 分析
+            formData.append('use_ai', 'true');
+            formData.append('ai_provider', 'openai');
+            
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/detect', true);
             
@@ -698,7 +709,7 @@
             progressContainer.style.display = 'block';
             loadingSpinner.style.display = 'block';
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>分析中...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>AI 分析中...';
             
             // 上傳進度
             xhr.upload.onprogress = evt => {

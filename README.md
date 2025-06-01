@@ -1,131 +1,154 @@
-# 🔥 火災偵測與報告系統
+# 🔥 火災偵測系統
 
-本專案是一個結合深度學習與大型語言模型（LLM）的火災偵測系統，能夠自動分析上傳的圖片是否含有火災情況，並依照使用者身份生成對應的應變建議報告。支援 Web 界面操作，搭配 GPU 加速與本地推論部署，提升實用性與反應速度。
+基於深度學習的智能火災偵測與應急處置系統
 
----
+## ✨ 主要功能
 
-## ✅ 系統功能特色
+- **🔍 智能火災偵測**：使用 CNN 深度學習模型進行火災識別
+- **🤖 AI 分析報告**：整合本地大語言模型提供專業建議
+- **👥 角色化建議**：根據使用者身份（一般民眾/消防隊員/管理單位）提供個性化建議
+- **📊 視覺化界面**：直觀的 Web 界面，支援拖拽上傳
+- **📋 專業 SOP**：內建火災應急處置標準作業程序
 
-- 🔍 圖像火災自動偵測（CNN 模型推論）
-- 🧠 火災發生時整合 LLM（Gemma 模型 via Ollama）自動補全建議
-- 🧑‍🚒 支援三種使用者身份（一般民眾、消防隊員、管理單位）
-- 🧾 根據 SOP 規則提供具體應變建議（知識庫 JSON 結構）
-- 💻 響應式前端設計（Bootstrap 5，支援拖曳上傳與複製報告）
-- 🔌 模組化設計，可擴充部署於工廠、實驗室、無人機等場域
+## 🛠️ 系統架構
 
----
+### 核心技術
+- **深度學習模型**：自訓練的 CNN 模型，專門針對火災場景優化
+- **本地 LLM**：支援 Ollama/Gemma 等本地大語言模型
+- **Flask 後端**：RESTful API 設計，支援圖片上傳與分析
+- **響應式前端**：現代化 Web 界面，支援多種設備
 
-## 🖥️ 環境需求
+### 檔案結構
+```
+fire_report_project/
+├── app.py                 # Flask 主應用程式
+├── run.py                 # 系統啟動腳本
+├── requirements.txt       # 依賴套件清單
+├── templates/
+│   └── index.html        # Web 前端界面
+├── static/
+│   ├── css/              # 樣式檔案
+│   ├── js/               # JavaScript 檔案
+│   └── uploads/          # 上傳圖片目錄
+├── models/
+│   └── fire_detection/   # 火災偵測模型
+├── knowledge_base/
+│   └── sop.json         # SOP 知識庫
+└── .env                  # 環境變數設定
+```
 
-- Python 3.12+
-- 建議安裝 CUDA 支援（GPU 推論）
-- 作業系統：Linux / macOS / WSL / Windows（部分功能需調整）
+## 🚀 快速開始
 
----
-
-## 🚀 安裝與啟動流程
-
-### 1. 專案下載與虛擬環境建立
-
+### 1. 環境準備
 ```bash
-git clone https://github.com/Lean0411/fire_report_project.git
-cd fire_report_project
-
+# 建立虛擬環境
 python -m venv .venv
-source .venv/bin/activate  # Windows 請使用 .venv\Scripts\activate
-````
+source .venv/bin/activate  # Linux/Mac
+# 或 .venv\Scripts\activate  # Windows
 
-### 2. 安裝依賴
-
-```bash
+# 安裝依賴
 pip install -r requirements.txt
 ```
 
-### 3. 放入模型檔案
+### 2. 模型設定
+確保 `models/fire_detection/` 目錄下有訓練好的模型檔案
 
-請將已訓練的模型 `deep_wildfire_cnn_model_amp.pth` 放入：
-
-```
-models/fire_detection/deep_wildfire_cnn_model_amp.pth
-```
-
-
-
----
-
-## 🧪 執行應用
-
+### 3. 啟動系統
 ```bash
 python run.py
 ```
 
-啟動成功後，打開瀏覽器：
+系統將在 http://127.0.0.1:5002 啟動
 
-```
-http://127.0.0.1:5000
-```
+## 📖 使用說明
 
-即可進行圖片上傳與火災偵測、報告建議生成。
+### 基本使用流程
+1. **選擇身份**：一般民眾/消防隊員/管理單位
+2. **上傳圖片**：支援 JPG、PNG 格式，最大 16MB
+3. **獲得分析**：系統自動進行火災檢測和 AI 分析
+4. **查看建議**：根據身份獲得專業的應急處置建議
 
----
+### API 端點
+- `POST /api/detect`：火災偵測主 API
+- `GET /api/fire-safety-advice`：獲取火災安全建議
+- `POST /api/analyze-fire-intensity`：火勢強度分析
 
-## 🧠 進階功能：串接本地 LLM（Gemma）
+## ⚙️ 設定說明
 
-系統支援透過 [Ollama](https://ollama.com) 快速部署 LLM 模型，範例如下：
-
+### 環境變數 (.env)
 ```bash
-# 安裝 Ollama
-curl -fsSL https://ollama.com/install.sh | sh
+# 本地 LLM 設定
+OLLAMA_HOST=http://127.0.0.1:11434
+OLLAMA_MODEL=gemma:7b
 
-# 拉取模型
-ollama pull gemma:7b
+# 系統設定
+FLASK_ENV=development
+FLASK_DEBUG=true
 ```
 
-你也可以將火災圖片分析結果送入 LLM 進行報告補全與行動建議自動產出，請參考 `/fire_report_project/llm_srv/` 下的 `serve.py` 實作。
+### 角色建議系統
+系統根據使用者身份提供不同層級的建議：
+
+- **一般民眾**：基礎逃生指導、緊急聯絡方式
+- **消防隊員**：戰術評估、器材配置、安全協議
+- **管理單位**：資源調度、應急管理、公眾溝通
+
+## 🔧 技術特色
+
+### 1. 深度學習檢測
+- 使用自訓練的 CNN 模型
+- 支援多種火災場景識別
+- 高準確率的二元分類（火災/非火災）
+
+### 2. 本地 AI 分析
+- 整合 Ollama 本地大語言模型
+- 無需外部 API 依賴
+- 保護資料隱私安全
+
+### 3. 專業知識庫
+- 內建標準作業程序（SOP）
+- 分角色專業建議系統
+- 可擴展的知識庫架構
+
+### 4. 現代化界面
+- 響應式設計，支援多設備
+- 拖拽上傳，操作便利
+- 即時進度顯示
+- 美觀的結果展示
+
+## 📊 系統需求
+
+### 硬體需求
+- CPU：多核心處理器推薦
+- RAM：至少 8GB（模型載入需求）
+- 儲存：至少 5GB 可用空間
+
+### 軟體需求
+- Python 3.8+
+- PyTorch
+- Flask
+- Pillow
+- 其他依賴詳見 requirements.txt
+
+## 🔍 故障排除
+
+### 常見問題
+1. **模型載入失敗**：確認模型檔案路徑正確
+2. **端口被佔用**：檢查 5002 端口是否可用
+3. **圖片上傳失敗**：確認檔案格式和大小限制
+4. **LLM 無回應**：確認 Ollama 服務運行狀態
+
+### 日誌查看
+系統日誌保存在 `logs/app.log`，包含詳細的運行資訊和錯誤記錄。
+
+## 🤝 貢獻指南
+
+歡迎提交 Issue 和 Pull Request 來改善系統功能。
+
+## 📄 授權條款
+
+本專案採用開源授權，詳情請查看 LICENSE 檔案。
 
 ---
 
-## 📁 專案結構總覽
-
-```
-fire_report_project/
-├── app.py                    # Flask 主應用程式
-├── run.py                   # 可選執行入口（可改為 run server）
-├── app/                     # Flask 輔助模組（config, routes, utils 等）
-├── templates/index.html     # 前端頁面（Jinja2）
-├── static/                  # 上傳圖像與樣式
-├── models/                  # 模型存放位置（需手動放置）
-├── knowledge_base/sop.json  # SOP 建議知識庫（依角色分類）
-├── tests/                   # 測試模組（pytest）
-├── requirements.txt         # Python 套件需求
-├── README.md                # 本說明文件
-└── .env                     # 可選環境變數設定檔
-```
-
----
-
-## ⚠️ 注意事項
-
-* 若首次使用或圖片來源多樣，模型可能會有偵測誤差，請配合人工複檢。
-* LLM 產出建議內容不作為唯一判斷依據，實際情況仍需依照 SOP 與專業人員判斷。
-* 使用過程若報錯 `Object of type Undefined is not JSON serializable`，請確認 `category_labels` 有正確傳入模板。
-
----
-
-## 📜 授權 License
-
-本專案採用 MIT License，歡迎自由使用、修改與再散布。
-
----
-
-## 🙋‍♂️ 聯絡方式
-
-作者：Lean
-Email：[113753207@g.nccu.edu.tw](mailto:113753207@g.nccu.edu.tw)
-
----
-
-```
-
-如果你需要我幫你加上專案圖、系統架構圖、或轉成 PDF 格式也可以告訴我！你想加上專案執行畫面或部署指令嗎？
-```
+🚨 **重要提醒**：本系統僅供輔助參考，實際火災情況請優先確保人身安全並立即聯絡消防單位。

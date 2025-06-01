@@ -3,6 +3,17 @@
 venv/
 ENV/
 
+# ===== 環境變數與機密配置 =====
+.env
+.env.local
+.env.production
+.env.development
+.env.staging
+*.env
+config.ini
+secrets.json
+credentials.json
+
 # ===== Python 快取與編譯檔 =====
 __pycache__/
 *.py[cod]

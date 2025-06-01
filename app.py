@@ -144,6 +144,29 @@ preprocess = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
+# 類別標籤對應表（用於前端顯示）
+category_labels = {
+    'general': '一般民眾',
+    'firefighter': '消防隊員', 
+    'management': '管理單位',
+    'emergency_action_plan': '緊急行動計劃',
+    'evacuation_procedures': '疏散程序',
+    'evacuation_preparedness': '疏散準備',
+    'shelter_in_place': '就地避難',
+    'communication_protocol': '通訊協議',
+    'initial_assessment': '初步評估',
+    'suppression_strategy': '滅火策略',
+    'safety_protocols': '安全協議',
+    'emergency_management_protocols': '緊急管理協議',
+    'resource_allocation': '資源配置',
+    'public_communication': '公眾溝通',
+    'incident_command': '事故指揮',
+    'tactical_operations': '戰術行動',
+    'personnel_safety': '人員安全',
+    'communication_coordination': '溝通協調',
+    'resilience_and_recovery': '復原與重建'
+}
+
 # ===================== 輔助函式 =====================
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -179,12 +202,34 @@ def predict_fire(path: str):
         p_fire = 1.0 - p_no
     return p_fire, p_no
 
+
+def generate_annotated_image(image_path: str, filename: str, is_fire: bool, p_fire: float, p_no: float) -> str:
+    """生成分析結果圖片（不添加任何標註，保持原圖）"""
+    try:
+        # 直接複製原圖，不添加任何標註
+        from PIL import Image
+        
+        # 開啟原圖
+        img = Image.open(image_path).convert('RGB')
+        
+        # 儲存圖片（不做任何修改）
+        annotated_filename = f"annotated_{filename}"
+        annotated_path = os.path.join(app.config['UPLOAD_FOLDER'], annotated_filename)
+        img.save(annotated_path, quality=95)
+        
+        app.logger.info(f"成功生成分析圖片（無標註）: {annotated_filename}")
+        return annotated_filename
+        
+    except Exception as e:
+        app.logger.error(f"生成分析圖片時發生錯誤: {e}")
+        return filename  # 如果失敗，返回原檔名
+
 # ===================== 路由 =====================
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         return detect_fire()
-    return render_template('index.html')
+    return render_template('index.html', category_labels=category_labels)
 
 @app.route('/api/detect', methods=['POST'])
 def detect_fire():
@@ -201,7 +246,11 @@ def detect_fire():
     if not allowed_file(f.filename):
         return jsonify({'success': False, 'error': '檔案格式不支援'}), 400
 
-    fn = secure_filename(f.filename)
+    # 生成時間戳檔名以避免衝突
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    file_ext = os.path.splitext(f.filename)[1]
+    fn = f"{timestamp}{file_ext}"
+    
     save_path = os.path.join(app.config['UPLOAD_FOLDER'], fn)
     f.save(save_path)
 
@@ -211,13 +260,20 @@ def detect_fire():
     
     is_fire = p_fire > 0.5
     
+    # 生成分析結果圖片
+    try:
+        annotated_filename = generate_annotated_image(save_path, fn, is_fire, p_fire, p_no)
+    except Exception as e:
+        app.logger.error(f"生成分析圖片失敗: {e}")
+        annotated_filename = fn  # 如果生成失敗，使用原圖
+    
     # 根據角色獲取建議
     recommendations = get_role_recommendations(role, is_fire)
     
     result = {
         'success': True,
         'data': {
-            'filename': fn,
+            'filename': annotated_filename,  # 返回標註後的檔名
             'detection': {
                 'is_fire': is_fire,
                 'description': f'偵測到火災 (信心度: {p_fire:.1%})' if is_fire else f'未偵測到火災 (信心度: {p_no:.1%})',

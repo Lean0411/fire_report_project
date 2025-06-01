@@ -1,38 +1,40 @@
-print(">>> ENTERING run.py <<<")
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+火災偵測系統啟動腳本
+"""
 
-from app import create_app
-from app.config import get_config
+import sys
 import os
 
-# run.py
+# 確保當前目錄在Python路徑中
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
-from app import create_app
-from app.config import get_config
-import os
+print("🔥 火災偵測系統啟動中...")
 
-# 選擇開發或生產設定
-config_class = get_config()
-
-# 建立 Flask 應用
-app = create_app(config_class)
-
-# 確認程式有載入
-print(f"==> run.py loaded; DEBUG={app.config['DEBUG']}")
+try:
+    # 直接導入app.py中的Flask實例
+    from app import app
+    print("✅ 系統載入成功")
+    
+except ImportError as e:
+    print(f"❌ 導入失敗: {e}")
+    print("請確認依賴已正確安裝")
+    sys.exit(1)
 
 if __name__ == '__main__':
     host = '127.0.0.1'
     port = int(os.environ.get('PORT', 5001))
-    debug = app.config.get('DEBUG', False)
     
-    print(f"==> Starting server at http://{host}:{port} (debug={debug})")
-    print(f"==> 請在瀏覽器中訪問: http://127.0.0.1:{port}")
-    print(f"==> 或使用: http://localhost:{port}")
+    print(f"📍 網址: http://{host}:{port}")
+    print(f"🌐 或使用: http://localhost:{port}")
+    print("=" * 40)
     
-    # 明確設定所有參數，避免被覆蓋
+    # 使用app.py中的Flask實例
     app.run(
         host=host,
         port=port,
-        debug=debug,
-        threaded=True,
-        use_reloader=False  # 避免重載器可能造成的配置問題
+        debug=True,
+        threaded=True
     )

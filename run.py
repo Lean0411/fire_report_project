@@ -122,13 +122,21 @@ def auto_handle_port_conflict(host, port, max_retries=3):
 print("🔥 火災偵測系統啟動中...")
 
 try:
-    # 直接導入app.py中的Flask實例
+    # 使用模組化架構導入Flask實例
     from app import app
-    print("✅ 系統載入成功")
+    print("✅ 模組化系統載入成功")
+    
+    # 顯示模組載入狀態
+    try:
+        from models.model_utils import model_manager
+        device_info = model_manager.get_device_info()
+        print(f"🤖 AI模型設備: {device_info['device']}")
+    except Exception:
+        print("⚠️ AI模型模組載入警告")
     
 except ImportError as e:
-    print(f"❌ 導入失敗: {e}")
-    print("請確認依賴已正確安裝")
+    print(f"❌ 模組導入失敗: {e}")
+    print("請確認依賴已正確安裝，並檢查模組結構")
     sys.exit(1)
 
 if __name__ == '__main__':

@@ -122,13 +122,25 @@ def auto_handle_port_conflict(host, port, max_retries=3):
 print("🔥 火災偵測系統自動啟動中...")
 
 try:
-    # 直接導入app.py中的Flask實例
+    # 使用模組化架構導入Flask實例
     from app import app
-    print("✅ 系統載入成功")
+    print("✅ 模組化系統載入成功")
+    
+    # 顯示系統狀態
+    try:
+        from services.safety_service import safety_service
+        tips = safety_service.generate_fire_safety_tips()
+        print(f"🛡️ 安全服務: {len(tips)}個建議類別")
+        
+        from services.sop_service import sop_service
+        roles = sop_service.get_available_roles()
+        print(f"👥 SOP服務: {len(roles)}個角色")
+    except Exception:
+        print("⚠️ 服務模組載入警告")
     
 except ImportError as e:
-    print(f"❌ 導入失敗: {e}")
-    print("請確認依賴已正確安裝")
+    print(f"❌ 模組導入失敗: {e}")
+    print("請確認依賴已正確安裝，並檢查模組結構")
     sys.exit(1)
 
 if __name__ == '__main__':

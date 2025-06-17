@@ -23,6 +23,13 @@
 - [使用說明](#使用說明)
   - [基本使用流程](#基本使用流程)
   - [API 端點](#api-端點)
+- [使用範例](#使用範例)
+  - [基本 Web 界面使用](#1-基本-web-界面使用)
+  - [API 程式化調用](#2-api-程式化調用)
+- [API 文檔](#api-文檔)
+  - [POST /api/detect](#post-apidetect---火災檢測)
+  - [GET /api/fire-safety-advice](#get-apifire-safety-advice---火災安全建議)
+  - [GET /](#get----web-界面)
 - [設定說明](#設定說明)
   - [環境變數](#環境變數-env)
   - [角色建議系統](#角色建議系統)
@@ -249,6 +256,202 @@ pip cache purge
 - **`POST /api/detect`**：火災偵測主 API
 - **`GET /api/fire-safety-advice`**：獲取火災安全建議
 - **`GET /`**：Web 界面首頁
+
+## 使用範例
+
+### 1. 基本 Web 界面使用
+
+```bash
+# 啟動系統後，在瀏覽器中訪問
+http://127.0.0.1:5002
+
+# 1. 選擇身份角色
+# 2. 上傳火災圖片
+# 3. 查看檢測結果和專業建議
+```
+
+### 2. API 程式化調用
+
+#### 火災檢測 API
+
+```python
+import requests
+
+# 準備上傳檔案和參數
+files = {'file': open('fire_image.jpg', 'rb')}
+data = {
+    'role': 'firefighter',    # 身份：general/firefighter/management
+    'use_ai': 'true',         # 啟用 AI 分析
+    'ai_provider': 'openai'   # AI 提供者：openai/ollama
+}
+
+# 發送檢測請求
+response = requests.post('http://127.0.0.1:5002/api/detect', 
+                        files=files, data=data)
+
+# 處理回應
+if response.status_code == 200:
+    result = response.json()
+    if result['success']:
+        detection = result['data']['detection']
+        print(f"火災檢測: {'是' if detection['is_fire'] else '否'}")
+        print(f"火災機率: {detection['fire_probability']}%")
+        print(f"AI 分析: {result['data']['llm_report']}")
+    else:
+        print(f"錯誤: {result['error']}")
+```
+
+#### 獲取火災安全建議
+
+```python
+import requests
+
+# 獲取特定角色的安全建議
+response = requests.get('http://127.0.0.1:5002/api/fire-safety-advice',
+                       params={'role': 'general'})
+
+if response.status_code == 200:
+    advice = response.json()
+    for category, actions in advice.items():
+        print(f"\n{category}:")
+        for action in actions:
+            print(f"- {action}")
+```
+
+#### JavaScript 前端整合
+
+```javascript
+// 檔案上傳和火災檢測
+async function detectFire(imageFile, userRole) {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+    formData.append('role', userRole);
+    formData.append('use_ai', 'true');
+    formData.append('ai_provider', 'openai');
+    
+    try {
+        const response = await fetch('/api/detect', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const detection = result.data.detection;
+            console.log('檢測結果:', detection.is_fire ? '火災' : '安全');
+            console.log('信心度:', detection.fire_probability + '%');
+            return result.data;
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('檢測失敗:', error);
+        throw error;
+    }
+}
+
+// 使用範例
+const fileInput = document.getElementById('file-input');
+fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        try {
+            const result = await detectFire(file, 'general');
+            displayResult(result);
+        } catch (error) {
+            alert('檢測失敗: ' + error.message);
+        }
+    }
+});
+```
+
+## API 文檔
+
+### POST /api/detect - 火災檢測
+
+**功能**: 上傳圖片進行火災檢測和智能分析
+
+**請求格式**: `multipart/form-data`
+
+**參數**:
+| 參數名 | 類型 | 必填 | 說明 |
+|--------|------|------|------|
+| `file` | File | ✓ | 圖片檔案 (JPG/PNG/JPEG, 最大5MB) |
+| `role` | String | ✓ | 使用者角色 (`general`/`firefighter`/`management`) |
+| `use_ai` | String | - | 是否啟用AI分析 (`true`/`false`, 預設: `false`) |
+| `ai_provider` | String | - | AI提供者 (`openai`/`ollama`, 預設: `openai`) |
+
+**回應格式**: `application/json`
+
+**成功回應** (200):
+```json
+{
+  "success": true,
+  "data": {
+    "detection": {
+      "is_fire": true,
+      "fire_probability": 87.5,
+      "no_fire_probability": 12.5,
+      "model_confidence": 0.875
+    },
+    "filename": "annotated_20250617_123456.jpg",
+    "recommendations": {
+      "emergency_action_plan": [
+        "制訂並訓練緊急應變計畫，包含疏散程序與責任分工",
+        "定期進行疏散演練並檢視逃生路線標示"
+      ]
+    },
+    "llm_report": "根據影像分析，檢測到明顯火焰和煙霧特徵...",
+    "processing_time": 2.34
+  }
+}
+```
+
+**錯誤回應** (400/500):
+```json
+{
+  "success": false,
+  "error": "檔案格式不支援，請上傳 JPG/PNG/JPEG 格式"
+}
+```
+
+### GET /api/fire-safety-advice - 火災安全建議
+
+**功能**: 獲取基於角色的火災安全建議
+
+**請求格式**: `application/x-www-form-urlencoded` 或 `JSON`
+
+**參數**:
+| 參數名 | 類型 | 必填 | 說明 |
+|--------|------|------|------|
+| `role` | String | - | 使用者角色 (`general`/`firefighter`/`management`) |
+
+**回應格式**: `application/json`
+
+**成功回應** (200):
+```json
+{
+  "emergency_action_plan": [
+    "制訂並訓練緊急應變計畫，包含疏散程序與責任分工",
+    "定期進行疏散演練並檢視逃生路線標示"
+  ],
+  "evacuation_preparedness": [
+    "預先確認工作、學校與社區的疏散路線與集合地點",
+    "為弱勢族群／行動不便者準備專用協助措施"
+  ]
+}
+```
+
+### GET / - Web 界面
+
+**功能**: 提供視覺化的火災檢測 Web 界面
+
+**回應**: HTML 頁面，包含：
+- 圖片上傳區域（拖拽支援）
+- 角色選擇下拉選單
+- 即時檢測結果顯示
+- 專業建議展示區域
 
 ## 設定說明
 

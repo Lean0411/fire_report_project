@@ -1,6 +1,40 @@
 # 🔥 火災偵測系統
 
+![Python](https://img.shields.io/badge/python-3.8+-blue.svg?style=flat-square&logo=python)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-orange.svg?style=flat-square&logo=pytorch)
+![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg?style=flat-square&logo=flask)
+![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)
+
 基於深度學習的智能火災偵測與應急處置系統
+
+[🚀 快速開始](#快速開始) • [📖 使用說明](#使用說明) • [🔧 API文檔](#api-端點) • [❓ 問題回報](https://github.com/Lean0411/fire_report_project/issues)
+
+## 目錄
+
+- [主要功能](#主要功能)
+- [系統架構](#系統架構)
+  - [核心技術](#核心技術)
+  - [檔案結構](#檔案結構)
+- [快速開始](#快速開始)
+  - [1. 環境準備](#1-環境準備)
+  - [2. 模型設定](#2-模型設定)
+  - [3. 啟動系統](#3-啟動系統)
+- [使用說明](#使用說明)
+  - [基本使用流程](#基本使用流程)
+  - [API 端點](#api-端點)
+- [設定說明](#設定說明)
+  - [環境變數](#環境變數-env)
+  - [角色建議系統](#角色建議系統)
+- [技術特色](#技術特色)
+- [系統需求](#系統需求)
+  - [硬體需求](#硬體需求)
+  - [軟體需求](#軟體需求)
+- [故障排除](#故障排除)
+  - [常見問題](#常見問題)
+  - [日誌查看](#日誌查看)
+- [貢獻指南](#貢獻指南)
+- [授權條款](#授權條款)
 
 ## 主要功能
 
@@ -39,39 +73,182 @@ fire_report_project/
 
 ## 快速開始
 
-### 1. 環境準備
-```bash
-# 建立虛擬環境
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# 或 .venv\Scripts\activate  # Windows
+### 前置需求檢查
 
-# 安裝依賴
+在開始之前，請確認您的系統滿足以下需求：
+
+```bash
+# 檢查 Python 版本 (需要 3.8+)
+python --version
+
+# 檢查可用記憶體 (建議 8GB+)
+free -h  # Linux
+# 或在 Windows: wmic memorychip get capacity
+
+# 檢查可用儲存空間 (需要 5GB+)
+df -h .  # Linux/Mac
+# 或在 Windows: dir
+```
+
+### 1. 環境準備
+
+#### 步驟 1.1：克隆專案
+```bash
+# 克隆專案到本地
+git clone https://github.com/Lean0411/fire_report_project.git
+
+# 進入專案目錄
+cd fire_report_project
+```
+
+#### 步驟 1.2：建立虛擬環境
+```bash
+# 建立 Python 虛擬環境
+python -m venv .venv
+
+# 啟動虛擬環境
+source .venv/bin/activate     # Linux/Mac
+# 或
+.venv\Scripts\activate        # Windows PowerShell
+# 或  
+.venv\Scripts\activate.bat    # Windows Command Prompt
+```
+
+#### 步驟 1.3：升級 pip 並安裝依賴
+```bash
+# 升級 pip 到最新版本
+python -m pip install --upgrade pip
+
+# 安裝專案依賴
 pip install -r requirements.txt
+
+# 驗證關鍵套件安裝
+python -c "import torch; print(f'PyTorch: {torch.__version__}')"
+python -c "import flask; print(f'Flask: {flask.__version__}')"
 ```
 
 ### 2. 模型設定
-確保 `models/fire_detection/` 目錄下有訓練好的模型檔案
 
-### 3. 啟動系統
+#### 步驟 2.1：檢查模型檔案
 ```bash
-python run.py
+# 確認模型目錄存在
+ls -la models/fire_detection/
+
+# 檢查模型檔案 (應該存在 deep_wildfire_cnn_model_amp.pth)
+ls -lh models/fire_detection/*.pth
 ```
 
-系統將在 http://127.0.0.1:5002 啟動
+#### 步驟 2.2：模型檔案下載 (如果缺失)
+```bash
+# 如果模型檔案不存在，請從以下位置下載：
+# [模型下載連結] - 請聯絡專案維護者獲取模型檔案
+# 檔案大小約：~421MB
+```
+
+### 3. 配置設定
+
+#### 步驟 3.1：環境變數設定
+```bash
+# 複製環境變數範例檔案
+cp .env.example .env
+
+# 編輯環境變數 (使用您偏好的編輯器)
+nano .env
+# 或
+vim .env
+```
+
+#### 步驟 3.2：設定內容說明
+```bash
+# 本地語言引擎設定 (可選)
+OLLAMA_HOST=http://127.0.0.1:11434  # Ollama 服務地址
+OLLAMA_MODEL=gemma:7b              # 使用的模型
+
+# OpenAI 設定 (可選，需要 API Key)
+OPENAI_API_KEY=your_api_key_here   # 替換為您的 OpenAI API Key
+
+# 系統設定
+FLASK_ENV=development              # 開發環境
+FLASK_DEBUG=true                   # 啟用調試模式
+PORT=5002                          # 服務端口
+```
+
+### 4. 啟動系統
+
+#### 步驟 4.1：啟動應用程式
+```bash
+# 使用自動啟動腳本 (推薦)
+python run.py
+
+# 或使用手動啟動
+python app.py
+```
+
+#### 步驟 4.2：驗證啟動
+```bash
+# 檢查應用程式是否正常運行
+curl http://127.0.0.1:5002
+
+# 或在瀏覽器中訪問
+# http://127.0.0.1:5002
+# http://localhost:5002
+```
+
+### 5. 驗證安裝
+
+#### 功能測試
+1. **界面測試**：開啟瀏覽器訪問 http://127.0.0.1:5002
+2. **上傳測試**：嘗試上傳一張測試圖片
+3. **偵測測試**：查看是否能正常進行火災偵測
+
+#### 常見啟動問題
+
+**端口被佔用**
+```bash
+# 檢查端口使用情況
+netstat -tulpn | grep :5002
+
+# 更換端口啟動
+PORT=5003 python run.py
+```
+
+**模型載入失敗**
+```bash
+# 檢查模型檔案權限
+ls -la models/fire_detection/
+
+# 檢查可用記憶體
+free -h
+```
+
+**依賴套件錯誤**
+```bash
+# 重新安裝依賴
+pip install --force-reinstall -r requirements.txt
+
+# 清理 pip 快取
+pip cache purge
+```
+
+### 🎉 安裝完成
+
+系統成功啟動後，您將看到：
+- 🌐 **Web 界面**：http://127.0.0.1:5002
+- 📊 **控制台輸出**：顯示啟動資訊和日誌
+- 📁 **日誌檔案**：`logs/app.log`
 
 ## 使用說明
 
 ### 基本使用流程
 1. **選擇身份**：一般民眾/消防隊員/管理單位
-2. **上傳圖片**：支援 JPG、PNG 格式，最大 16MB
+2. **上傳圖片**：支援 JPG、PNG 格式，最大 5MB
 3. **獲得分析**：系統自動進行火災檢測和智能分析
 4. **查看建議**：根據身份獲得專業的應急處置建議
 
 ### API 端點
 - **`POST /api/detect`**：火災偵測主 API
-- **`GET /api/fire-safety-advice`**：獲取火災安全建議  
-- **`POST /api/analyze-fire-intensity`**：火勢強度分析
+- **`GET /api/fire-safety-advice`**：獲取火災安全建議
+- **`GET /`**：Web 界面首頁
 
 ## 設定說明
 

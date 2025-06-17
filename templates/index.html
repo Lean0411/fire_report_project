@@ -549,7 +549,7 @@
                             <i class="fas fa-cloud-upload-alt"></i>
                         </div>
                         <h4 style="margin-bottom: 15px;">拖曳圖片至此處或點擊選擇</h4>
-                        <p class="text-muted">支援格式：JPG、PNG、JPEG | 檔案大小：最大 16MB</p>
+                        <p class="text-muted">支援格式：JPG、PNG、JPEG | 檔案大小：最大 5MB</p>
                         <input type="file" class="form-control d-none" id="file" name="file" accept="image/*" required>
                     </div>
                     
@@ -648,7 +648,7 @@
                 showPreview(file);
                 fileInput.files = e.dataTransfer.files;
             } else {
-                showError('請上傳 JPG/PNG/JPEG 格式的圖片，且檔案大小不超過 16MB');
+                showError('請上傳 JPG/PNG/JPEG 格式的圖片，且檔案大小不超過 5MB');
             }
         });
         
@@ -659,14 +659,14 @@
             if (validateFile(file)) {
                 showPreview(file);
             } else {
-                showError('請上傳 JPG/PNG/JPEG 格式的圖片，且檔案大小不超過 16MB');
+                showError('請上傳 JPG/PNG/JPEG 格式的圖片，且檔案大小不超過 5MB');
             }
         });
         
         // 檔案驗證
         function validateFile(file) {
             const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-            return validTypes.includes(file.type) && file.size <= 16 * 1024 * 1024;
+            return validTypes.includes(file.type) && file.size <= 5 * 1024 * 1024;
         }
         
         // 顯示預覽

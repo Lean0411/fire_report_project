@@ -65,17 +65,37 @@ fire_report_project/
 ├── app.py                 # Flask 主應用程式
 ├── run.py                 # 系統啟動腳本
 ├── requirements.txt       # 依賴套件清單
+├── api/                   # API 模組
+│   ├── detection.py      # 火災檢測 API
+│   └── safety.py         # 安全建議 API
+├── config/                # 配置模組
+│   ├── settings.py       # 應用配置
+│   └── logging_config.py # 日誌配置
+├── services/              # 業務邏輯層
+│   ├── ai_service.py     # AI 服務
+│   ├── image_service.py  # 圖片處理服務
+│   ├── sop_service.py    # SOP 服務
+│   └── safety_service.py # 安全服務
+├── models/                # 模型目錄
+│   ├── cnn_model.py      # CNN 模型定義
+│   ├── model_utils.py    # 模型工具
+│   └── fire_detection/   # 火災偵測模型檔案
+├── utils/                 # 工具模組
+│   ├── constants.py      # 常數定義
+│   ├── file_utils.py     # 檔案工具
+│   ├── text_utils.py     # 文字工具
+│   └── security_utils.py # 安全工具
 ├── templates/
 │   └── index.html        # Web 前端界面
 ├── static/
 │   ├── css/              # 樣式檔案
 │   ├── js/               # JavaScript 檔案
 │   └── uploads/          # 上傳圖片目錄
-├── models/
-│   └── fire_detection/   # 火災偵測模型
 ├── knowledge_base/
 │   └── sop.json         # SOP 知識庫
-└── .env                  # 環境變數設定
+├── logs/                  # 日誌目錄
+├── .env                   # 環境變數設定
+└── .env.example          # 環境變數範例
 ```
 
 ## 快速開始
@@ -167,17 +187,25 @@ vim .env
 
 #### 步驟 3.2：設定內容說明
 ```bash
+# Flask 應用安全金鑰 (重要：生產環境必須設置)
+# 生成方式: python -c "import secrets; print(secrets.token_hex(32))"
+FLASK_SECRET_KEY=your_flask_secret_key_here
+
+# OpenAI API 設定 (可選，需要 API Key)
+# 從 https://platform.openai.com/api-keys 獲取
+OPENAI_API_KEY=your_openai_api_key_here
+
 # 本地語言引擎設定 (可選)
 OLLAMA_HOST=http://127.0.0.1:11434  # Ollama 服務地址
 OLLAMA_MODEL=gemma:7b              # 使用的模型
-
-# OpenAI 設定 (可選，需要 API Key)
-OPENAI_API_KEY=your_api_key_here   # 替換為您的 OpenAI API Key
 
 # 系統設定
 FLASK_ENV=development              # 開發環境
 FLASK_DEBUG=true                   # 啟用調試模式
 PORT=5002                          # 服務端口
+
+# 日誌設定
+LOG_LEVEL=INFO                     # 日誌等級
 ```
 
 ### 4. 啟動系統
@@ -253,8 +281,22 @@ pip cache purge
 4. **查看建議**：根據身份獲得專業的應急處置建議
 
 ### API 端點
+
+#### 火災檢測相關
 - **`POST /api/detect`**：火災偵測主 API
+- **`GET /api/detect/status`**：獲取檢測系統狀態
+
+#### 安全建議相關
 - **`GET /api/fire-safety-advice`**：獲取火災安全建議
+- **`GET /api/safety/general-tips`**：獲取一般安全建議
+- **`GET /api/safety/situation/<situation>`**：獲取特定情況建議
+- **`GET /api/safety/emergency-contacts`**：獲取緊急聯絡方式
+- **`GET /api/safety/checklist`**：獲取安全檢查清單
+- **`POST /api/safety/role-advice`**：獲取角色化建議
+- **`GET /api/safety/sop/validate`**：驗證 SOP 數據
+- **`GET /api/safety/roles`**：獲取可用角色列表
+
+#### Web 界面
 - **`GET /`**：Web 界面首頁
 
 ## 使用範例
@@ -368,7 +410,9 @@ fileInput.addEventListener('change', async (e) => {
 
 ## API 文檔
 
-### POST /api/detect - 火災檢測
+### 🔥 火災檢測 API
+
+#### POST /api/detect - 火災檢測
 
 **功能**: 上傳圖片進行火災檢測和智能分析
 
@@ -381,6 +425,8 @@ fileInput.addEventListener('change', async (e) => {
 | `role` | String | ✓ | 使用者角色 (`general`/`firefighter`/`management`) |
 | `use_ai` | String | - | 是否啟用AI分析 (`true`/`false`, 預設: `false`) |
 | `ai_provider` | String | - | AI提供者 (`openai`/`ollama`, 預設: `openai`) |
+
+**安全性**: 所有輸入參數都經過驗證和清理，防止 XSS 攻擊
 
 **回應格式**: `application/json`
 
@@ -416,7 +462,46 @@ fileInput.addEventListener('change', async (e) => {
 }
 ```
 
-### GET /api/fire-safety-advice - 火災安全建議
+#### GET /api/detect/status - 系統狀態
+
+**功能**: 獲取檢測系統的運行狀態
+
+**回應格式**: `application/json`
+
+**成功回應** (200):
+```json
+{
+  "success": true,
+  "data": {
+    "model": {
+      "loaded": true,
+      "device": "cpu",
+      "model_path": "models/fire_detection/..."
+    },
+    "device": {
+      "type": "cpu",
+      "available_memory": "7.8GB"
+    },
+    "ai_services": {
+      "openai_configured": true,
+      "ollama_configured": false
+    },
+    "supported_roles": {
+      "general": "一般民眾",
+      "firefighter": "消防隊員",
+      "management": "管理單位"
+    },
+    "supported_ai_providers": {
+      "openai": "OpenAI GPT",
+      "ollama": "Ollama 本地模型"
+    }
+  }
+}
+```
+
+### 🛡️ 安全建議 API
+
+#### GET /api/fire-safety-advice - 火災安全建議
 
 **功能**: 獲取基於角色的火災安全建議
 
@@ -443,7 +528,19 @@ fileInput.addEventListener('change', async (e) => {
 }
 ```
 
-### GET / - Web 界面
+#### 其他安全建議 API
+
+**GET /api/safety/general-tips** - 一般安全建議  
+**GET /api/safety/situation/<situation>** - 情況專用建議  
+**GET /api/safety/emergency-contacts** - 緊急聯絡  
+**GET /api/safety/checklist** - 安全檢查清單  
+**POST /api/safety/role-advice** - 角色化建議  
+**GET /api/safety/sop/validate** - SOP 數據驗證  
+**GET /api/safety/roles** - 角色列表  
+
+### 🌐 Web 界面
+
+#### GET / - Web 界面
 
 **功能**: 提供視覺化的火災檢測 Web 界面
 
@@ -455,16 +552,54 @@ fileInput.addEventListener('change', async (e) => {
 
 ## 設定說明
 
+### 🔐 安全性配置
+
+系統實施了多層安全防護機制：
+
+#### 輸入驗證
+- 所有用戶輸入經過嚴格驗證和清理
+- HTML 轉義防止 XSS 攻擊
+- 文件類型和大小限制
+- 角色和參數白名單驗證
+
+#### API Key 管理
+- 環境變數方式存儲敏感信息
+- API Key 格式驗證
+- 錯誤處理時不洩露敏感信息
+
+#### 錯誤處理
+- 統一錯誤處理機制
+- 日誌信息長度限制
+- 敏感數據遮蔽
+
 ### 環境變數 (.env)
 ```bash
-# 本地語言引擎設定
+# Flask 應用安全金鑰 (重要：生產環境必須設置)
+# 生成方式: python -c "import secrets; print(secrets.token_hex(32))"
+FLASK_SECRET_KEY=your_flask_secret_key_here
+
+# OpenAI API 設定 (可選，需要 API Key)
+# 從 https://platform.openai.com/api-keys 獲取
+OPENAI_API_KEY=your_openai_api_key_here
+
+# 本地語言引擎設定 (可選)
 OLLAMA_HOST=http://127.0.0.1:11434
 OLLAMA_MODEL=gemma:7b
 
 # 系統設定
 FLASK_ENV=development
 FLASK_DEBUG=true
+PORT=5002
+
+# 日誌設定
+LOG_LEVEL=INFO
 ```
+
+#### 🚨 安全警告
+- **生產環境**必須設置 `FLASK_SECRET_KEY`
+- **不要**在代碼中硬編碼 API Key
+- **定期**更換 API Key
+- **啟用 HTTPS** 在生產環境中
 
 ### 角色建議系統
 系統根據使用者身份提供不同層級的建議：
@@ -512,22 +647,378 @@ FLASK_DEBUG=true
 
 ## 故障排除
 
+## 🚀 部署指南
+
+### 生產環境部署
+
+#### Docker 部署 (推薦)
+```bash
+# 建置 Docker 鏡像
+docker build -t fire-detection .
+
+# 運行容器
+docker run -d \
+  --name fire-detection-app \
+  -p 5002:5002 \
+  -v $(pwd)/models:/app/models \
+  -v $(pwd)/logs:/app/logs \
+  --env-file .env \
+  fire-detection
+```
+
+#### 傳統部署
+```bash
+# 使用 systemd 服務
+sudo tee /etc/systemd/system/fire-detection.service > /dev/null <<EOF
+[Unit]
+Description=Fire Detection System
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/fire_report_project
+Environment=PATH=/var/www/fire_report_project/.venv/bin
+ExecStart=/var/www/fire_report_project/.venv/bin/python run.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 啟動服務
+sudo systemctl enable fire-detection
+sudo systemctl start fire-detection
+```
+
+#### Nginx 反向代理配置
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    client_max_body_size 10M;
+    
+    location / {
+        proxy_pass http://127.0.0.1:5002;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+    }
+}
+```
+
+### 效能優化
+
+#### 模型優化
+```bash
+# 使用 GPU 加速 (如果可用)
+# 在 config/settings.py 中設置
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+# 模型量化 (減少內存使用)
+# 在模型載入時啟用
+model = torch.jit.script(model)  # TorchScript
+```
+
+#### 緩存配置
+```python
+# Redis 緩存 (可選)
+# 在 requirements.txt 中添加: redis
+# 在 config/settings.py 中配置
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
+CACHE_TIMEOUT = 300  # 5 分鐘
+```
+
+## 🏢 技術架構
+
+### 系統架構圖
+```
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│   Web 前端   │   │  Flask API  │   │  業務服務  │
+│  (React/JS)  │──▶│   路由層   │──▶│   處理層   │
+└─────────────┘   └─────────────┘   └─────────────┘
+                                         │
+                           └──────────────┴───────────────┐
+                                                         │
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│   AI 服務   │   │  模型管理  │   │  SOP 知識  │
+│ OpenAI/Ollama │◀──│   CNN模型   │◀──│   庫管理   │
+└─────────────┘   └─────────────┘   └─────────────┘
+```
+
+### 核心模組說明
+
+#### 1. API 層 (api/)
+- **detection.py**: 火災檢測 API 端點
+- **safety.py**: 安全建議 API 端點
+
+#### 2. 服務層 (services/)
+- **ai_service.py**: AI 模型整合 (OpenAI/Ollama)
+- **image_service.py**: 圖片處理和標註
+- **sop_service.py**: SOP 知識庫管理
+- **safety_service.py**: 安全建議生成
+
+#### 3. 模型層 (models/)
+- **cnn_model.py**: CNN 模型定義
+- **model_utils.py**: 模型加載和管理
+
+#### 4. 工具層 (utils/)
+- **security_utils.py**: 安全驗證和清理
+- **file_utils.py**: 檔案處理工具
+- **constants.py**: 常數定義
+
+### 技術特色
+
+#### 1. 模組化設計
+- 清晰的分層架構
+- 高度可維護性
+- 易於擴展和測試
+
+#### 2. 安全性設計
+- 多層輸入驗證
+- XSS 攻擊防護
+- API Key 安全管理
+
+#### 3. 效能優化
+- 懶加載模型
+- 異步處理機制
+- 內存管理優化
+
+#### 4. 擴展性
+- 微服務架構就緒
+- Docker 容器化支援
+- 水平擴展能力
+
+## 系統需求
+
+### 最低需求
+| 項目 | 規格 |
+|------|------|
+| **CPU** | 4 核心 2.0GHz+ |
+| **RAM** | 8GB |
+| **儲存** | 5GB 可用空間 |
+| **Python** | 3.8+ |
+| **作業系統** | Ubuntu 20.04+ / CentOS 8+ / Windows 10+ |
+
+### 推薦配置
+| 項目 | 規格 |
+|------|------|
+| **CPU** | 8 核心 3.0GHz+ |
+| **RAM** | 16GB+ |
+| **GPU** | NVIDIA GTX 1060+ (可選) |
+| **儲存** | SSD 20GB+ |
+| **網路** | 100Mbps+ |
+
+### 軟體依賴
+```python
+# 核心依賴
+Flask>=2.0.0
+PyTorch>=2.0.0
+Pillow>=9.0.0
+requests>=2.28.0
+python-dotenv>=0.19.0
+
+# AI 服務
+openai>=1.0.0  # 可選
+ollama>=0.1.0  # 可選
+
+# 其他工具
+numpy>=1.21.0
+opencv-python>=4.5.0
+```
+
+## 故障排除
+
 ### 常見問題
-1. **模型載入失敗**：確認模型檔案路徑正確
-2. **端口被佔用**：檢查 5002 端口是否可用
-3. **圖片上傳失敗**：確認檔案格式和大小限制
-4. **語言引擎無回應**：確認 Ollama 服務運行狀態
+
+#### 1. 模型載入失敗
+```bash
+# 檢查模型檔案
+ls -la models/fire_detection/
+file models/fire_detection/*.pth
+
+# 檢查檔案權限
+chmod 644 models/fire_detection/*.pth
+
+# 檢查內存使用
+free -h
+htop
+```
+
+#### 2. 端口被佔用
+```bash
+# 查看端口使用
+netstat -tulpn | grep :5002
+lsof -i :5002
+
+# 結束佔用程序
+sudo kill -9 <PID>
+
+# 使用其他端口
+PORT=5003 python run.py
+```
+
+#### 3. 圖片上傳失敗
+```bash
+# 檢查上傳目錄權限
+ls -la static/uploads/
+chmod 755 static/uploads/
+
+# 檢查磁碟空間
+df -h .
+
+# 清理舊檔案
+find static/uploads/ -mtime +7 -type f -delete
+```
+
+#### 4. AI 服務無回應
+```bash
+# 檢查 Ollama 服務
+curl http://127.0.0.1:11434/api/version
+
+# 重啟 Ollama
+sudo systemctl restart ollama
+
+# 檢查 OpenAI API Key
+echo $OPENAI_API_KEY | cut -c1-10
+```
 
 ### 日誌查看
-系統日誌保存在 `logs/app.log`，包含詳細的運行資訊和錯誤記錄。
 
-## 貢獻指南
+#### 實時日誌監控
+```bash
+# 實時查看日誌
+tail -f logs/app.log
 
-歡迎提交 Issue 和 Pull Request 來改善系統功能。
+# 篩選錯誤日誌
+grep -i error logs/app.log | tail -20
 
-## 授權條款
+# 查看特定時間範圍
+grep "2025-06-17" logs/app.log
+```
 
-本專案採用開源授權，詳情請查看 LICENSE 檔案。
+#### 日誌輪轉配置
+```bash
+# 使用 logrotate
+sudo tee /etc/logrotate.d/fire-detection > /dev/null <<EOF
+/var/www/fire_report_project/logs/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+}
+EOF
+```
+
+### 監控和告警
+
+#### 系統監控
+```bash
+# 內存使用監控
+ps aux | grep python | grep fire
+
+# CPU 使用監控
+top -p $(pgrep -f "python.*run.py")
+
+# 磁碟使用監控
+du -sh logs/ static/uploads/
+```
+
+#### 自動化監控腳本
+```bash
+#!/bin/bash
+# health_check.sh
+URL="http://127.0.0.1:5002/api/detect/status"
+RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" $URL)
+
+if [ $RESPONSE -ne 200 ]; then
+    echo "系統異常：HTTP $RESPONSE"
+    # 發送告警郵件或通知
+fi
+```
+
+## 🤝 貢獻指南
+
+我們歡迎社區貢獻！以下是參與方式：
+
+### 問題回報
+- 使用 [GitHub Issues](https://github.com/Lean0411/fire_report_project/issues) 回報 Bug
+- 提供詳細的錯誤說明和重現步驟
+- 附上相關日誌和環境資訊
+
+### 功能建議
+- 在 Issues 中提出新功能建議
+- 詳細描述功能需求和使用場景
+- 提供模擬圖或原型（如有）
+
+### 代碼貢獻
+1. Fork 本倉庫
+2. 建立特性分支：`git checkout -b feature/amazing-feature`
+3. 提交修改：`git commit -m 'Add amazing feature'`
+4. 推送到分支：`git push origin feature/amazing-feature`
+5. 開啟 Pull Request
+
+### 開發指南
+```bash
+# 設置開發環境
+git clone https://github.com/YOUR-USERNAME/fire_report_project.git
+cd fire_report_project
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt  # 開發工具
+
+# 運行測試
+pytest tests/
+
+# 代碼格式化
+black .
+flake8 .
+```
+
+### 貢獻指引
+- 遵循 PEP 8 代碼風格
+- 為新功能添加測試
+- 更新相關文檔
+- 保持向後相容性
+
+## 📜 授權條款
+
+本專案採用 MIT 授權條款，詳情請查看 [LICENSE](LICENSE) 檔案。
+
+### 簡單說明
+- ✅ 商用使用
+- ✅ 修改和分發
+- ✅ 私人使用
+- ✅ 包含在更大的作品中
+- ❌ 無責任和無保證
+
+---
+
+## 🔗 相關連結
+
+- **專案倉庫**: [GitHub](https://github.com/Lean0411/fire_report_project)
+- **問題回報**: [Issues](https://github.com/Lean0411/fire_report_project/issues)
+- **功能建議**: [Discussions](https://github.com/Lean0411/fire_report_project/discussions)
+- **文檔網站**: [Wiki](https://github.com/Lean0411/fire_report_project/wiki)
+
+## 📞 支援與聯絡
+
+如果您在使用過程中遇到問題，請：
+
+1. 查閱 [故障排除](#故障排除) 節
+2. 搜索現有 [Issues](https://github.com/Lean0411/fire_report_project/issues)
+3. 建立新的 Issue 並提供詳細資訊
+
+**感謝您的使用和貢獻！**
 
 ---
 

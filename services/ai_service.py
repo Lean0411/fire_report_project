@@ -20,12 +20,22 @@ class AIService:
     """AI服務類，負責與AI模型的溝通"""
     
     def __init__(self):
-        self.openai_config = Config.get_openai_config()
-        self.ollama_config = Config.get_ollama_config()
-        
-        # 設置 OpenAI API Key
-        if self.openai_config['api_key']:
+        try:
+            self.openai_config = Config.get_openai_config()
             openai.api_key = self.openai_config['api_key']
+            self.openai_available = True
+        except (ValueError, KeyError) as e:
+            logger.warning(f"OpenAI 配置無效: {e}")
+            self.openai_config = {'api_key': None}
+            self.openai_available = False
+        
+        try:
+            self.ollama_config = Config.get_ollama_config()
+            self.ollama_available = True
+        except (ValueError, KeyError) as e:
+            logger.warning(f"Ollama 配置無效: {e}")
+            self.ollama_config = {'host': None, 'model': None}
+            self.ollama_available = False
     
     def call_openai_gpt(self, prompt: str, model: str = "gpt-4o", 
                        image_path: Optional[str] = None) -> str:
@@ -41,7 +51,8 @@ class AIService:
             str: AI 生成的回應
         """
         try:
-            if not openai.api_key:
+            if not self.openai_available or not openai.api_key:
+                logger.warning("嘗試使用 OpenAI API 但未正確配置")
                 return "未設置 OpenAI API Key，請在 .env 檔案中設置 OPENAI_API_KEY"
             
             messages = [
@@ -97,7 +108,7 @@ class AIService:
             return filtered_content
             
         except Exception as e:
-            logger.error(f"OpenAI API 呼叫失敗: {e}")
+            logger.error(f"OpenAI API 呼叫失敗: {str(e)[:200]}")
             return self._generate_fallback_response()
     
     def call_ollama_gemma(self, prompt: str, image_path: Optional[str] = None) -> str:
@@ -153,7 +164,7 @@ class AIService:
             logger.error("無法連接到 Ollama 服務，請確認服務是否運行")
             return self._generate_fallback_response()
         except Exception as e:
-            logger.error(f"Ollama 呼叫失敗: {e}")
+            logger.error(f"Ollama 呼叫失敗: {str(e)[:200]}")
             return self._generate_fallback_response()
     
     def _encode_image(self, image_path: str) -> Optional[str]:
@@ -191,7 +202,7 @@ class AIService:
             return base64_image
             
         except Exception as e:
-            logger.error(f"圖片編碼失敗: {e}")
+            logger.error(f"圖片編碼失敗: {str(e)[:100]}")
             return None
     
     def _generate_fallback_response(self) -> str:
@@ -233,9 +244,11 @@ class AIService:
             dict: 服務狀態資訊
         """
         return {
-            'openai_configured': bool(self.openai_config['api_key']),
-            'ollama_host': self.ollama_config['host'],
-            'ollama_model': self.ollama_config['model']
+            'openai_configured': self.openai_available,
+            'openai_api_key_length': len(self.openai_config.get('api_key', '')) if self.openai_config.get('api_key') else 0,
+            'ollama_configured': self.ollama_available,
+            'ollama_host': self.ollama_config.get('host', 'Not configured'),
+            'ollama_model': self.ollama_config.get('model', 'Not configured')
         }
 
 # 全域 AI 服務實例

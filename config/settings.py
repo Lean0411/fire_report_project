@@ -17,6 +17,9 @@ class Config:
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB 上限
     SEND_FILE_MAX_AGE_DEFAULT = 0  # 開發模式下停用快取
     
+    # 安全性設定
+    SECRET_KEY = os.getenv('FLASK_SECRET_KEY', os.urandom(32).hex())
+    
     # OpenAI 設定
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     
@@ -44,7 +47,8 @@ class Config:
             UPLOAD_FOLDER=cls.UPLOAD_FOLDER,
             ALLOWED_EXTENSIONS=cls.ALLOWED_EXTENSIONS,
             MAX_CONTENT_LENGTH=cls.MAX_CONTENT_LENGTH,
-            SEND_FILE_MAX_AGE_DEFAULT=cls.SEND_FILE_MAX_AGE_DEFAULT
+            SEND_FILE_MAX_AGE_DEFAULT=cls.SEND_FILE_MAX_AGE_DEFAULT,
+            SECRET_KEY=cls.SECRET_KEY
         )
         
         # 確保必要的目錄存在
@@ -54,14 +58,27 @@ class Config:
     @classmethod
     def get_openai_config(cls):
         """獲取OpenAI配置"""
+        api_key = cls.OPENAI_API_KEY
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY 環境變數未設置")
+        if len(api_key) < 10:
+            raise ValueError("OPENAI_API_KEY 格式不正確")
         return {
-            'api_key': cls.OPENAI_API_KEY
+            'api_key': api_key
         }
     
     @classmethod
     def get_ollama_config(cls):
         """獲取Ollama配置"""
+        host = cls.OLLAMA_HOST
+        model = cls.OLLAMA_MODEL
+        
+        if not host or not host.startswith(('http://', 'https://')):
+            raise ValueError("OLLAMA_HOST 必須是有效的URL")
+        if not model or len(model.strip()) == 0:
+            raise ValueError("OLLAMA_MODEL 不能為空")
+            
         return {
-            'host': cls.OLLAMA_HOST,
-            'model': cls.OLLAMA_MODEL
+            'host': host,
+            'model': model
         }

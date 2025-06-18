@@ -124,7 +124,7 @@ class TestConfigurationFiles:
     
     def test_pytest_config_exists(self):
         """Test pytest configuration exists."""
-        base_dir = os.path.join(os.path.dirname(__file__), '../../..')
+        base_dir = os.path.join(os.path.dirname(__file__), '../..')
         pytest_ini_path = os.path.join(base_dir, 'pytest.ini')
         
         assert os.path.exists(pytest_ini_path)

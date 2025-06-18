@@ -64,3 +64,15 @@ static/uploads/
 
 # ===== 日誌檔案 =====
 logs/
+
+# ===== 測試覆蓋率報告 =====
+htmlcov/
+.coverage
+.coverage.*
+coverage.json
+.pytest_cache/
+
+# ===== 臨時檔案 =====
+*.tmp
+*.temp
+.temp/

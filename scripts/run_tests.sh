@@ -23,7 +23,7 @@ python3 -m pytest \
     --cov=config \
     --cov-report=term-missing \
     --cov-report=html \
-    --cov-config=.coveragerc \
+    --cov-config=tests/.coveragerc \
     -v
 
 TEST_EXIT_CODE=$?

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F7931E;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="apiGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#50C878;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3A9B5C;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="serviceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9B59B6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7D3C98;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dataGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#E74C3C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C0392B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <rect x="0" y="0" width="800" height="60" fill="url(#headerGrad)"/>
+  <text x="400" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">🔥 FireGuard AI - System Architecture</text>
+  
+  <!-- Client Layer -->
+  <rect x="50" y="80" width="700" height="80" rx="10" fill="url(#clientGrad)" opacity="0.9"/>
+  <text x="400" y="105" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Client Layer</text>
+  
+  <!-- Web Client -->
+  <rect x="80" y="120" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="150" y="140" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">🌐 Web Interface</text>
+  
+  <!-- Mobile App -->
+  <rect x="250" y="120" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="320" y="140" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">📱 Mobile App</text>
+  
+  <!-- API Client -->
+  <rect x="420" y="120" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="490" y="140" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">🔌 API Client</text>
+  
+  <!-- REST API -->
+  <rect x="580" y="120" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="650" y="140" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">🔗 REST API</text>
+  
+  <!-- API Gateway -->
+  <rect x="50" y="180" width="700" height="80" rx="10" fill="url(#apiGrad)" opacity="0.9"/>
+  <text x="400" y="205" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">🛡️ API Gateway & Security</text>
+  
+  <!-- Gateway Components -->
+  <rect x="80" y="220" width="130" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="145" y="240" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">🔐 Authentication</text>
+  
+  <rect x="230" y="220" width="130" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="295" y="240" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">⚡ Rate Limiting</text>
+  
+  <rect x="380" y="220" width="130" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="445" y="240" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">✅ Validation</text>
+  
+  <rect x="530" y="220" width="130" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="595" y="240" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11">💾 Response Cache</text>
+  
+  <!-- Service Layer -->
+  <rect x="50" y="280" width="700" height="120" rx="10" fill="url(#serviceGrad)" opacity="0.9"/>
+  <text x="400" y="305" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">🧠 Core Services</text>
+  
+  <!-- CNN Model -->
+  <rect x="80" y="320" width="150" height="70" rx="5" fill="white" opacity="0.2"/>
+  <text x="155" y="340" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">🔍 CNN Engine</text>
+  <text x="155" y="355" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">PyTorch Model</text>
+  <text x="155" y="370" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Fire Detection</text>
+  <text x="155" y="385" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">95%+ Accuracy</text>
+  
+  <!-- AI Service -->
+  <rect x="250" y="320" width="150" height="70" rx="5" fill="white" opacity="0.2"/>
+  <text x="325" y="340" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">🤖 AI Service</text>
+  <text x="325" y="355" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">GPT-4 • Gemma</text>
+  <text x="325" y="370" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Ollama • Claude</text>
+  <text x="325" y="385" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Risk Analysis</text>
+  
+  <!-- Image Service -->
+  <rect x="420" y="320" width="150" height="70" rx="5" fill="white" opacity="0.2"/>
+  <text x="495" y="340" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">🖼️ Image Service</text>
+  <text x="495" y="355" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">OpenCV</text>
+  <text x="495" y="370" text_anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Processing</text>
+  <text x="495" y="385" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Validation</text>
+  
+  <!-- SOP Service -->
+  <rect x="590" y="320" width="150" height="70" rx="5" fill="white" opacity="0.2"/>
+  <text x="665" y="340" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">📋 SOP Service</text>
+  <text x="665" y="355" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Emergency</text>
+  <text x="665" y="370" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Protocols</text>
+  <text x="665" y="385" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Role-based</text>
+  
+  <!-- Data Layer -->
+  <rect x="50" y="420" width="700" height="80" rx="10" fill="url(#dataGrad)" opacity="0.9"/>
+  <text x="400" y="445" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">💾 Data & Storage Layer</text>
+  
+  <!-- Storage Components -->
+  <rect x="80" y="460" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="150" y="480" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">🗄️ File Storage</text>
+  
+  <rect x="250" y="460" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="320" y="480" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">🧠 Model Files</text>
+  
+  <rect x="420" y="460" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="490" y="480" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">📊 Knowledge Base</text>
+  
+  <rect x="580" y="460" width="140" height="30" rx="5" fill="white" opacity="0.2"/>
+  <text x="650" y="480" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">📝 Logs & Config</text>
+  
+  <!-- Monitoring -->
+  <rect x="50" y="520" width="700" height="60" rx="10" fill="#34495e" opacity="0.9"/>
+  <text x="400" y="545" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">📊 Monitoring & Observability</text>
+  
+  <rect x="200" y="555" width="120" height="20" rx="3" fill="white" opacity="0.2"/>
+  <text x="260" y="568" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">🔍 Application Logs</text>
+  
+  <rect x="340" y="555" width="120" height="20" rx="3" fill="white" opacity="0.2"/>
+  <text x="400" y="568" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">⚡ Performance</text>
+  
+  <rect x="480" y="555" width="120" height="20" rx="3" fill="white" opacity="0.2"/>
+  <text x="540" y="568" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">🛡️ Security Audit</text>
+  
+  <!-- Arrows -->
+  <!-- Client to Gateway -->
+  <path d="M 400 160 L 400 180" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Gateway to Services -->
+  <path d="M 400 260 L 400 280" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Services to Data -->
+  <path d="M 400 400 L 400 420" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Data to Monitoring -->
+  <path d="M 400 500 L 400 520" stroke="#2c3e50" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+    </marker>
+  </defs>
+  
+</svg>

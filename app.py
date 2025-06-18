@@ -2,6 +2,11 @@
 火災檢測系統主應用程式
 使用模組化架構重構後的Flask應用
 """
+import os
+# 強制 PyTorch 使用 CPU，避免 CUDA 驅動問題
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
+os.environ['TORCH_USE_CUDA'] = '0'
+
 from flask import Flask, render_template, request, redirect
 
 # 導入配置和日誌
@@ -30,18 +35,14 @@ def create_app():
     logger.info("火災檢測系統啟動中...")
     
     # 註冊藍圖
+    logger.info("正在註冊 detection 藍圖...")
     app.register_blueprint(detection_bp)
+    logger.info("detection 藍圖註冊完成")
+    
+    logger.info("正在註冊 safety 藍圖...")
     app.register_blueprint(safety_bp)
+    logger.info("safety 藍圖註冊完成")
     
-    # 靜態資源路由
-    @app.route('/favicon.ico')
-    def favicon():
-        return app.send_static_file('favicon.ico')
-    
-    @app.route('/apple-touch-icon.png')
-    @app.route('/apple-touch-icon-precomposed.png') 
-    def apple_touch_icon():
-        return app.send_static_file('apple-touch-icon.png')
     
     # 主頁路由
     @app.route('/', methods=['GET', 'POST'])

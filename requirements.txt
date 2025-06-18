@@ -13,3 +13,28 @@ pytest>=7.0.0
 pytest-cov>=4.0.0
 pytest-mock>=3.10.0
 pytest-flask>=1.2.0
+gunicorn>=20.0.0
+
+# Database and ORM
+flask-sqlalchemy>=3.0.0
+flask-migrate>=4.0.0
+alembic>=1.12.0
+
+# Authentication and Security
+flask-jwt-extended>=4.5.0
+werkzeug>=2.3.0
+bcrypt>=4.0.0
+
+# API and Validation
+marshmallow>=3.20.0
+flask-cors>=4.0.0
+
+# Caching
+redis>=5.0.0
+flask-caching>=2.1.0
+
+# Monitoring and Metrics
+psutil>=5.9.0
+
+# Development and Testing
+flask-testing>=0.8.1

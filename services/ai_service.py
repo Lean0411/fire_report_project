@@ -20,22 +20,48 @@ class AIService:
     """AI服務類，負責與AI模型的溝通"""
     
     def __init__(self):
+        # 延遲初始化，避免阻塞啟動
+        self.openai_config = {'api_key': None}
+        self.openai_available = False
+        self.ollama_config = {'host': None, 'model': None}
+        self.ollama_available = False
+        self._openai_initialized = False
+        self._ollama_initialized = False
+        
+        logger.info("AI服務初始化完成（延遲載入模式）")
+    
+    def _init_openai(self):
+        """延遲初始化 OpenAI 配置"""
+        if self._openai_initialized:
+            return
+        
         try:
             self.openai_config = Config.get_openai_config()
             openai.api_key = self.openai_config['api_key']
             self.openai_available = True
+            logger.info("OpenAI 配置初始化成功")
         except (ValueError, KeyError) as e:
             logger.warning(f"OpenAI 配置無效: {e}")
             self.openai_config = {'api_key': None}
             self.openai_available = False
         
+        self._openai_initialized = True
+    
+    def _init_ollama(self):
+        """延遲初始化 Ollama 配置"""
+        if self._ollama_initialized:
+            return
+        
         try:
             self.ollama_config = Config.get_ollama_config()
             self.ollama_available = True
+            logger.info("Ollama 配置初始化成功")
         except (ValueError, KeyError) as e:
             logger.warning(f"Ollama 配置無效: {e}")
             self.ollama_config = {'host': None, 'model': None}
             self.ollama_available = False
+        
+        self._ollama_initialized = True
     
     def call_openai_gpt(self, prompt: str, model: str = "gpt-4o", 
                        image_path: Optional[str] = None) -> str:
@@ -51,6 +77,9 @@ class AIService:
             str: AI 生成的回應
         """
         try:
+            # 延遲初始化 OpenAI
+            self._init_openai()
+            
             if not self.openai_available or not openai.api_key:
                 logger.warning("嘗試使用 OpenAI API 但未正確配置")
                 return "未設置 OpenAI API Key，請在 .env 檔案中設置 OPENAI_API_KEY"
@@ -123,6 +152,13 @@ class AIService:
             str: AI 生成的回應
         """
         try:
+            # 延遲初始化 Ollama
+            self._init_ollama()
+            
+            if not self.ollama_available:
+                logger.warning("嘗試使用 Ollama 但未正確配置")
+                return self._generate_fallback_response()
+            
             url = f"{self.ollama_config['host']}/v1/chat/completions"
             
             headers = {

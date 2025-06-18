@@ -122,6 +122,10 @@ def auto_handle_port_conflict(host, port, max_retries=3):
 print("🔥 火災偵測系統啟動中...")
 
 try:
+    # 強制 PyTorch 使用 CPU，避免 CUDA 驅動問題
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    os.environ['TORCH_USE_CUDA'] = '0'
+    
     # 使用模組化架構導入Flask實例
     from app import app
     print("✅ 模組化系統載入成功")

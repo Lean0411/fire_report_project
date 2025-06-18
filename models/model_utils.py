@@ -19,7 +19,8 @@ class ModelManager:
     """模型管理器，負責模型的載入、預測和管理"""
     
     def __init__(self):
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # 強制使用 CPU 避免 CUDA 相容性問題
+        self.device = torch.device('cpu')
         self.model: Optional[DeepCNN] = None
         self._model_lock = threading.Lock()
         self._load_attempted = False

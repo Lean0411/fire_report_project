@@ -1,0 +1,25 @@
+[run]
+source = .
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.env/*
+    */migrations/*
+    setup.py
+    */config/*
+    run.py
+    run_auto.py
+    gunicorn.conf.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod

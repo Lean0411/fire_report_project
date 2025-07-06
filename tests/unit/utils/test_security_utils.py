@@ -203,6 +203,33 @@ class TestAPIKeyValidation:
 
 
 @pytest.mark.unit
+class TestMaskSensitiveData:
+    """測試遮蔽敏感數據"""
+    
+    def test_mask_sensitive_data_normal(self):
+        """測試正常遮蔽"""
+        from utils.security_utils import mask_sensitive_data
+        assert mask_sensitive_data("1234567890", visible_chars=4) == "1234******"
+        assert mask_sensitive_data("sensitive", visible_chars=2) == "se*******"
+    
+    def test_mask_sensitive_data_empty(self):
+        """測試空數據"""
+        from utils.security_utils import mask_sensitive_data
+        assert mask_sensitive_data("", visible_chars=4) == ""
+        assert mask_sensitive_data(None, visible_chars=4) == ""
+    
+    def test_mask_sensitive_data_short(self):
+        """測試短數據"""
+        from utils.security_utils import mask_sensitive_data
+        assert mask_sensitive_data("abc", visible_chars=5) == "***"
+        assert mask_sensitive_data("ab", visible_chars=2) == "**"
+    
+    def test_mask_sensitive_data_custom_char(self):
+        """測試自定義遮蔽字符"""
+        from utils.security_utils import mask_sensitive_data
+        assert mask_sensitive_data("password123", mask_char="#", visible_chars=4) == "pass#######"
+
+
 class TestURLValidation:
     """Test cases for URL validation."""
     

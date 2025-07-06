@@ -6,7 +6,7 @@ import os
 import base64
 import tempfile
 import requests
-from typing import Optional
+from typing import Optional, Dict, Any
 from PIL import Image as PILImage
 import openai
 
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 class AIService:
     """AI服務類，負責與AI模型的溝通"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         # 延遲初始化，避免阻塞啟動
         self.openai_config = {'api_key': None}
         self.openai_available = False
@@ -36,7 +36,7 @@ class AIService:
         
         logger.info("AI服務初始化完成（延遲載入模式）")
     
-    def _init_openai(self):
+    def _init_openai(self) -> None:
         """延遲初始化 OpenAI 配置"""
         if self._openai_initialized:
             return
@@ -53,7 +53,7 @@ class AIService:
         
         self._openai_initialized = True
     
-    def _init_ollama(self):
+    def _init_ollama(self) -> None:
         """延遲初始化 Ollama 配置"""
         if self._ollama_initialized:
             return

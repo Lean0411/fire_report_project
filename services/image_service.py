@@ -4,7 +4,7 @@
 """
 import os
 from PIL import Image, ImageDraw, ImageFont
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 from datetime import datetime
 
 from config.settings import Config
@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 class ImageService:
     """圖片服務類，負責圖片處理和標註"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.upload_folder = Config.UPLOAD_FOLDER
         
     def generate_annotated_image(self, image_path: str, filename: str, 
@@ -199,7 +199,7 @@ class ImageService:
             logger.error(f"獲取圖片資訊時發生錯誤: {e}")
             return None
     
-    def cleanup_old_images(self, max_age_hours: int = IMAGE_CLEANUP_MAX_AGE_HOURS, max_files: int = IMAGE_CLEANUP_MAX_FILES):
+    def cleanup_old_images(self, max_age_hours: int = IMAGE_CLEANUP_MAX_AGE_HOURS, max_files: int = IMAGE_CLEANUP_MAX_FILES) -> int:
         """
         清理舊圖片檔案
         

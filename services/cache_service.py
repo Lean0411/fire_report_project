@@ -1,7 +1,7 @@
 import json
 import hashlib
 import pickle
-from typing import Any, Optional, Dict, Union
+from typing import Any, Optional, Dict, Union, Callable
 from datetime import datetime, timedelta
 import logging
 from config.constants import (
@@ -18,7 +18,7 @@ except ImportError:
 class CacheService:
     """Centralized caching service with Redis fallback to in-memory"""
     
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: Optional[str] = None) -> None:
         self.logger = logging.getLogger(__name__)
         self.redis_client = None
         self.memory_cache = {}

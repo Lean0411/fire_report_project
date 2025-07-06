@@ -4,7 +4,7 @@
 """
 import os
 import time
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, Response
 from werkzeug.datastructures import FileStorage
 
 from models.model_utils import model_manager
@@ -28,7 +28,7 @@ detection_bp = Blueprint("detection", __name__)
 
 
 @detection_bp.route("/api/detect", methods=["POST"])
-def detect_fire():
+def detect_fire() -> Response:
     """
     火災檢測主API
 
@@ -169,7 +169,7 @@ def _get_ai_analysis(
 
 
 @detection_bp.route("/api/detect/status", methods=["GET"])
-def get_detection_status():
+def get_detection_status() -> Response:
     """獲取檢測系統狀態"""
     try:
         model_status = model_manager.get_model_status()

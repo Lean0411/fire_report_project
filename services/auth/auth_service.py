@@ -1,10 +1,10 @@
 from functools import wraps
-from flask import request, jsonify, current_app
+from flask import Flask, request, jsonify, current_app
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity, get_jwt
 from werkzeug.security import check_password_hash
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Callable
 from config.constants import (
     JWT_ACCESS_TOKEN_EXPIRES, JWT_REFRESH_TOKEN_EXPIRES,
     AUTH_BEARER_PREFIX_LENGTH
@@ -16,11 +16,11 @@ from data.models.user_model import User
 class AuthService:
     """Authentication and authorization service"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.user_repo = UserRepository()
         self.jwt = None
     
-    def init_app(self, app):
+    def init_app(self, app: Flask) -> None:
         """Initialize authentication with Flask app"""
         # JWT Configuration
         app.config['JWT_SECRET_KEY'] = app.config.get('JWT_SECRET_KEY', secrets.token_urlsafe(32))
@@ -98,7 +98,7 @@ class AuthService:
         except Exception:
             return None
     
-    def require_auth(self, f):
+    def require_auth(self, f: Callable) -> Callable:
         """Decorator to require authentication"""
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -164,7 +164,7 @@ class AuthService:
         """Decorator to require firefighter role"""
         return self.require_role('firefighter')(f)
     
-    def optional_auth(self, f):
+    def optional_auth(self, f: Callable) -> Callable:
         """Decorator for optional authentication"""
         @wraps(f)
         def decorated_function(*args, **kwargs):

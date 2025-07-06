@@ -2,10 +2,11 @@ from functools import wraps
 from flask import request, current_app
 import time
 from datetime import datetime
+from typing import Callable
 
 from data.models.system_metrics import SystemMetrics, ApiUsage
 
-def track_api_metrics(f):
+def track_api_metrics(f: Callable) -> Callable:
     """Decorator to track API metrics"""
     @wraps(f)
     def decorated_function(*args, **kwargs):

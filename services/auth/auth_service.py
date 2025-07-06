@@ -5,6 +5,10 @@ from werkzeug.security import check_password_hash
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
+from config.constants import (
+    JWT_ACCESS_TOKEN_EXPIRES, JWT_REFRESH_TOKEN_EXPIRES,
+    AUTH_BEARER_PREFIX_LENGTH
+)
 
 from data.repositories.user_repository import UserRepository
 from data.models.user_model import User
@@ -20,8 +24,8 @@ class AuthService:
         """Initialize authentication with Flask app"""
         # JWT Configuration
         app.config['JWT_SECRET_KEY'] = app.config.get('JWT_SECRET_KEY', secrets.token_urlsafe(32))
-        app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
-        app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
+        app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
+        app.config['JWT_REFRESH_TOKEN_EXPIRES'] = JWT_REFRESH_TOKEN_EXPIRES
         
         self.jwt = JWTManager(app)
         
@@ -66,7 +70,7 @@ class AuthService:
         access_token = user.get_access_token()
         
         # For refresh token, we'll use a longer expiry
-        refresh_token = user.get_access_token(expires_delta=timedelta(days=30))
+        refresh_token = user.get_access_token(expires_delta=JWT_REFRESH_TOKEN_EXPIRES)
         
         return {
             'access_token': access_token,
@@ -81,7 +85,7 @@ class AuthService:
         
         # Remove 'Bearer ' prefix if present
         if api_key.startswith('Bearer '):
-            api_key = api_key[7:]
+            api_key = api_key[AUTH_BEARER_PREFIX_LENGTH:]
         
         return self.authenticate_api_key(api_key)
     

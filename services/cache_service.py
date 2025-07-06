@@ -4,6 +4,10 @@ import pickle
 from typing import Any, Optional, Dict, Union
 from datetime import datetime, timedelta
 import logging
+from config.constants import (
+    CACHE_TTL_MODEL_PREDICTIONS, CACHE_TTL_SOP_RESPONSES,
+    CACHE_CLEANUP_MAX_AGE, PERCENT_MULTIPLIER
+)
 
 try:
     import redis
@@ -218,7 +222,7 @@ class CacheService:
         
         # Calculate hit rate
         total_requests = stats['hits'] + stats['misses']
-        stats['hit_rate'] = (stats['hits'] / total_requests * 100) if total_requests > 0 else 0
+        stats['hit_rate'] = (stats['hits'] / total_requests * PERCENT_MULTIPLIER) if total_requests > 0 else 0
         
         return stats
     
@@ -245,7 +249,7 @@ class ModelCacheService:
     def __init__(self, cache_service: CacheService):
         self.cache = cache_service
         self.namespace = "model_predictions"
-        self.default_ttl = 3600  # 1 hour
+        self.default_ttl = CACHE_TTL_MODEL_PREDICTIONS  # 1 hour
     
     def get_prediction_key(self, image_hash: str, model_version: str) -> str:
         """Generate cache key for model prediction"""
@@ -293,7 +297,7 @@ class SopCacheService:
     def __init__(self, cache_service: CacheService):
         self.cache = cache_service
         self.namespace = "sop_data"
-        self.default_ttl = 7200  # 2 hours
+        self.default_ttl = CACHE_TTL_SOP_RESPONSES  # 2 hours
     
     def cache_sop_response(self, query: str, role: str, location: str, 
                           response: str, ttl: Optional[int] = None) -> bool:

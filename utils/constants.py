@@ -2,6 +2,7 @@
 常數定義模組
 包含應用程式中使用的常數和靜態數據
 """
+from config.constants import MAX_FILE_SIZE, HTTP_OK, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR
 
 # 類別標籤對應表（用於前端顯示）
 CATEGORY_LABELS = {
@@ -42,12 +43,12 @@ AI_PROVIDERS = {
     'ollama': 'Ollama Local LLM'
 }
 
-# 檔案大小限制 (bytes)
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+# 檔案大小限制 (bytes) - 從 config.constants 引入
+# MAX_FILE_SIZE 已經從 config.constants 引入
 
 # HTTP 狀態碼
 HTTP_STATUS = {
-    'OK': 200,
-    'BAD_REQUEST': 400,
-    'INTERNAL_SERVER_ERROR': 500
+    'OK': HTTP_OK,
+    'BAD_REQUEST': HTTP_BAD_REQUEST,
+    'INTERNAL_SERVER_ERROR': HTTP_INTERNAL_ERROR
 }

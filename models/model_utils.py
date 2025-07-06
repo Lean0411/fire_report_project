@@ -12,6 +12,9 @@ import threading
 from .cnn_model import DeepCNN
 from config.settings import Config
 from config.logging_config import get_logger
+from config.constants import (
+    IMAGE_INPUT_SIZE, IMAGE_NORMALIZE_MEAN, IMAGE_NORMALIZE_STD
+)
 
 logger = get_logger(__name__)
 
@@ -27,9 +30,9 @@ class ModelManager:
         
         # 圖像預處理管道
         self.preprocess = transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize(IMAGE_INPUT_SIZE),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            transforms.Normalize(IMAGE_NORMALIZE_MEAN, IMAGE_NORMALIZE_STD)
         ])
         
         logger.info(f"模型管理器初始化完成，使用設備: {self.device}")

@@ -4,6 +4,12 @@ CNN模型定義模組
 """
 import torch
 import torch.nn as nn
+from config.constants import (
+    CNN_CHANNELS_INPUT, CNN_CHANNELS_L1, CNN_CHANNELS_L2,
+    CNN_CHANNELS_L3, CNN_CHANNELS_L4, CNN_KERNEL_SIZE,
+    CNN_POOL_SIZE, CNN_HIDDEN_SIZE, CNN_DROPOUT_RATE,
+    CNN_FEATURE_MAP_SIZE, IMAGE_INPUT_SIZE
+)
 
 class DeepCNN(nn.Module):
     """
@@ -20,54 +26,54 @@ class DeepCNN(nn.Module):
         # 特徵提取層
         self.features = nn.Sequential(
             # Block 1: 3 -> 64
-            nn.Conv2d(3, 64, 3, padding=1), 
-            nn.BatchNorm2d(64), 
+            nn.Conv2d(CNN_CHANNELS_INPUT, CNN_CHANNELS_L1, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L1), 
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 3, padding=1), 
-            nn.BatchNorm2d(64), 
+            nn.Conv2d(CNN_CHANNELS_L1, CNN_CHANNELS_L1, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L1), 
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),  # 224->112
+            nn.MaxPool2d(CNN_POOL_SIZE),  # 224->112
             
             # Block 2: 64 -> 128
-            nn.Conv2d(64, 128, 3, padding=1), 
-            nn.BatchNorm2d(128), 
+            nn.Conv2d(CNN_CHANNELS_L1, CNN_CHANNELS_L2, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L2), 
             nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, 3, padding=1), 
-            nn.BatchNorm2d(128), 
+            nn.Conv2d(CNN_CHANNELS_L2, CNN_CHANNELS_L2, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L2), 
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),  # 112->56
+            nn.MaxPool2d(CNN_POOL_SIZE),  # 112->56
             
             # Block 3: 128 -> 256
-            nn.Conv2d(128, 256, 3, padding=1), 
-            nn.BatchNorm2d(256), 
+            nn.Conv2d(CNN_CHANNELS_L2, CNN_CHANNELS_L3, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L3), 
             nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, 3, padding=1), 
-            nn.BatchNorm2d(256), 
+            nn.Conv2d(CNN_CHANNELS_L3, CNN_CHANNELS_L3, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L3), 
             nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, 3, padding=1), 
-            nn.BatchNorm2d(256), 
+            nn.Conv2d(CNN_CHANNELS_L3, CNN_CHANNELS_L3, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L3), 
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),  # 56->28
+            nn.MaxPool2d(CNN_POOL_SIZE),  # 56->28
             
             # Block 4: 256 -> 512
-            nn.Conv2d(256, 512, 3, padding=1), 
-            nn.BatchNorm2d(512), 
+            nn.Conv2d(CNN_CHANNELS_L3, CNN_CHANNELS_L4, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L4), 
             nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, 3, padding=1), 
-            nn.BatchNorm2d(512), 
+            nn.Conv2d(CNN_CHANNELS_L4, CNN_CHANNELS_L4, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L4), 
             nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, 3, padding=1), 
-            nn.BatchNorm2d(512), 
+            nn.Conv2d(CNN_CHANNELS_L4, CNN_CHANNELS_L4, CNN_KERNEL_SIZE, padding=1), 
+            nn.BatchNorm2d(CNN_CHANNELS_L4), 
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2)   # 28->14
+            nn.MaxPool2d(CNN_POOL_SIZE)   # 28->14
         )
         
         # 分類器
         self.classifier = nn.Sequential(
-            nn.Linear(512 * 14 * 14, 1024), 
+            nn.Linear(CNN_CHANNELS_L4 * CNN_FEATURE_MAP_SIZE * CNN_FEATURE_MAP_SIZE, CNN_HIDDEN_SIZE), 
             nn.ReLU(inplace=True), 
-            nn.Dropout(0.5),
-            nn.Linear(1024, 1)  # 單一 logit，代表 NoFire 類別
+            nn.Dropout(CNN_DROPOUT_RATE),
+            nn.Linear(CNN_HIDDEN_SIZE, 1)  # 單一 logit，代表 NoFire 類別
         )
 
     def forward(self, x):
@@ -98,7 +104,7 @@ class DeepCNN(nn.Module):
             'model_name': 'DeepCNN',
             'total_parameters': total_params,
             'trainable_parameters': trainable_params,
-            'input_size': (3, 224, 224),
+            'input_size': (CNN_CHANNELS_INPUT,) + IMAGE_INPUT_SIZE,
             'output_size': 1,
             'task': 'Binary Classification (Fire/No Fire)'
         }

@@ -41,6 +41,10 @@ from api.middleware.metrics import track_api_metrics
 
 # 導入工具和常數
 from utils.constants import CATEGORY_LABELS
+from config.constants import (
+    DEFAULT_PORT, CORS_ALLOWED_PORTS, API_VERSION,
+    HTTP_NOT_FOUND, HTTP_INTERNAL_ERROR, HTTP_RATE_LIMITED
+)
 
 def create_app(config_name='default'):
     """創建Flask應用實例"""
@@ -57,7 +61,7 @@ def create_app(config_name='default'):
     # 初始化 CORS
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:3000", "http://localhost:5000"],
+            "origins": [f"http://localhost:{port}" for port in CORS_ALLOWED_PORTS],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "X-API-Key", "X-Session-ID"]
         }
@@ -119,7 +123,7 @@ def create_app(config_name='default'):
         response.headers['X-XSS-Protection'] = '1; mode=block'
         
         # 添加版本信息
-        response.headers['X-API-Version'] = '2.0.0'
+        response.headers['X-API-Version'] = API_VERSION
         response.headers['X-Service'] = 'FireGuard-AI'
         
         return response
@@ -132,9 +136,9 @@ def create_app(config_name='default'):
             return jsonify({
                 'error': 'Endpoint not found',
                 'message': 'The requested API endpoint does not exist',
-                'status_code': 404
-            }), 404
-        return render_template('404.html'), 404
+                'status_code': HTTP_NOT_FOUND
+            }), HTTP_NOT_FOUND
+        return render_template('404.html'), HTTP_NOT_FOUND
     
     @app.errorhandler(500)
     def internal_error(error):
@@ -144,9 +148,9 @@ def create_app(config_name='default'):
             return jsonify({
                 'error': 'Internal server error',
                 'message': 'An unexpected error occurred',
-                'status_code': 500
-            }), 500
-        return render_template('500.html'), 500
+                'status_code': HTTP_INTERNAL_ERROR
+            }), HTTP_INTERNAL_ERROR
+        return render_template('500.html'), HTTP_INTERNAL_ERROR
     
     @app.errorhandler(429)
     def rate_limit_error(error):
@@ -154,8 +158,8 @@ def create_app(config_name='default'):
         return jsonify({
             'error': 'Rate limit exceeded',
             'message': 'Too many requests. Please try again later.',
-            'status_code': 429
-        }), 429
+            'status_code': HTTP_RATE_LIMITED
+        }), HTTP_RATE_LIMITED
     
     # 主頁路由
     @app.route('/', methods=['GET', 'POST'])
@@ -175,7 +179,7 @@ def create_app(config_name='default'):
         """API信息端點"""
         return jsonify({
             'service': 'FireGuard AI',
-            'version': '2.0.0',
+            'version': API_VERSION,
             'description': 'AI-powered fire detection and analysis system',
             'api_versions': {
                 'v1': '/api/v1',
@@ -195,7 +199,7 @@ def create_app(config_name='default'):
     def version_info():
         """版本信息"""
         return jsonify({
-            'version': '2.0.0',
+            'version': API_VERSION,
             'build_date': '2024-01-01',
             'features': [
                 'AI fire detection',
@@ -265,7 +269,7 @@ app = create_app()
 if __name__ == '__main__':
     # 開發環境運行
     import os
-    port = int(os.environ.get('PORT', 5002))
+    port = int(os.environ.get('PORT', DEFAULT_PORT))
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     
     logger = get_logger(__name__)

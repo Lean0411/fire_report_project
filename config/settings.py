@@ -4,6 +4,8 @@
 """
 import os
 from dotenv import load_dotenv
+from .constants import MAX_FILE_SIZE, MIN_API_KEY_LENGTH
+from utils.constants import ALLOWED_EXTENSIONS
 
 # 載入環境變數
 load_dotenv()
@@ -13,8 +15,8 @@ class Config:
     
     # Flask 基本設定
     UPLOAD_FOLDER = 'static/uploads/'
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB 上限
+    ALLOWED_EXTENSIONS = ALLOWED_EXTENSIONS  # From utils/constants.py
+    MAX_CONTENT_LENGTH = MAX_FILE_SIZE  # 5MB 上限
     SEND_FILE_MAX_AGE_DEFAULT = 0  # 開發模式下停用快取
     
     # 安全性設定
@@ -24,7 +26,7 @@ class Config:
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     
     # Ollama 設定
-    OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://127.0.0.1:11434')
+    OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
     OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'gemma:7b')
     
     # 路徑設定
@@ -61,7 +63,7 @@ class Config:
         api_key = cls.OPENAI_API_KEY
         if not api_key:
             raise ValueError("OPENAI_API_KEY 環境變數未設置")
-        if len(api_key) < 10:
+        if len(api_key) < MIN_API_KEY_LENGTH:
             raise ValueError("OPENAI_API_KEY 格式不正確")
         return {
             'api_key': api_key

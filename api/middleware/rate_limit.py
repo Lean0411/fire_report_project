@@ -4,6 +4,11 @@ from datetime import datetime, timedelta
 import time
 from collections import defaultdict
 from typing import Dict, Optional
+from config.constants import (
+    CACHE_CLEANUP_MAX_AGE, RATE_LIMIT_WINDOW,
+    RATE_LIMIT_DEFAULT, RATE_LIMIT_API,
+    RATE_LIMIT_STRICT, RATE_LIMIT_PUBLIC
+)
 
 class RateLimiter:
     """Simple in-memory rate limiter"""
@@ -41,7 +46,7 @@ class RateLimiter:
         self.requests[key].append(now)
         return True, None
     
-    def cleanup_old_requests(self, max_age: int = 3600):
+    def cleanup_old_requests(self, max_age: int = CACHE_CLEANUP_MAX_AGE):
         """Clean up old request records"""
         cutoff = time.time() - max_age
         
@@ -53,7 +58,7 @@ class RateLimiter:
 # Global rate limiter instance
 rate_limiter = RateLimiter()
 
-def rate_limit(requests_per_minute: int = 60, per_user: bool = False):
+def rate_limit(requests_per_minute: int = RATE_LIMIT_DEFAULT, per_user: bool = False):
     """
     Rate limiting decorator
     
@@ -79,7 +84,7 @@ def rate_limit(requests_per_minute: int = 60, per_user: bool = False):
             is_allowed, retry_after = rate_limiter.is_allowed(
                 key=key,
                 limit=requests_per_minute,
-                window=60  # 60 seconds window
+                window=RATE_LIMIT_WINDOW  # 60 seconds window
             )
             
             if not is_allowed:
@@ -113,21 +118,21 @@ def rate_limit(requests_per_minute: int = 60, per_user: bool = False):
             if hasattr(response_obj, 'headers'):
                 response_obj.headers['X-RateLimit-Limit'] = str(requests_per_minute)
                 response_obj.headers['X-RateLimit-Remaining'] = str(max(0, remaining))
-                response_obj.headers['X-RateLimit-Reset'] = str(int(time.time() + 60))
+                response_obj.headers['X-RateLimit-Reset'] = str(int(time.time() + RATE_LIMIT_WINDOW))
             
             return response
         
         return decorated_function
     return decorator
 
-def api_rate_limit(requests_per_minute: int = 100):
+def api_rate_limit(requests_per_minute: int = RATE_LIMIT_API):
     """Rate limit for API endpoints"""
     return rate_limit(requests_per_minute=requests_per_minute, per_user=True)
 
-def strict_rate_limit(requests_per_minute: int = 10):
+def strict_rate_limit(requests_per_minute: int = RATE_LIMIT_STRICT):
     """Strict rate limit for sensitive endpoints"""
     return rate_limit(requests_per_minute=requests_per_minute, per_user=True)
 
-def public_rate_limit(requests_per_minute: int = 30):
+def public_rate_limit(requests_per_minute: int = RATE_LIMIT_PUBLIC):
     """Rate limit for public endpoints (by IP)"""
     return rate_limit(requests_per_minute=requests_per_minute, per_user=False)

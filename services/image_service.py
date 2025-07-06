@@ -9,6 +9,13 @@ from datetime import datetime
 
 from config.settings import Config
 from config.logging_config import get_logger
+from config.constants import (
+    IMAGE_QUALITY_HIGH, IMAGE_QUALITY_MEDIUM, IMAGE_MAX_SIZE,
+    FONT_SIZE_MIN, FONT_SIZE_DIVISOR, UI_PADDING,
+    COLOR_FIRE_RED, COLOR_SAFE_GREEN, COLOR_WHITE,
+    ALPHA_SEMI_TRANSPARENT, IMAGE_CLEANUP_MAX_AGE_HOURS,
+    IMAGE_CLEANUP_MAX_FILES, BYTES_TO_MB
+)
 from utils.file_utils import cleanup_old_files
 
 logger = get_logger(__name__)
@@ -48,7 +55,7 @@ class ImageService:
             annotated_path = os.path.join(self.upload_folder, annotated_filename)
             
             # 儲存圖片
-            img.save(annotated_path, quality=95)
+            img.save(annotated_path, quality=IMAGE_QUALITY_HIGH)
             
             logger.info(f"成功生成分析圖片: {annotated_filename}")
             return annotated_filename
@@ -76,19 +83,19 @@ class ImageService:
             
             # 設定字體（嘗試使用系統字體，失敗則使用預設）
             try:
-                font_size = max(20, img.width // 40)
+                font_size = max(FONT_SIZE_MIN, img.width // FONT_SIZE_DIVISOR)
                 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
             except:
                 font = ImageFont.load_default()
             
             # 設定顏色
             if is_fire:
-                text_color = (255, 0, 0)  # 紅色
-                bg_color = (255, 0, 0, 128)  # 半透明紅色
+                text_color = COLOR_FIRE_RED  # 紅色
+                bg_color = COLOR_FIRE_RED + (ALPHA_SEMI_TRANSPARENT,)  # 半透明紅色
                 result_text = "🔥 火災警告"
             else:
-                text_color = (0, 255, 0)  # 綠色
-                bg_color = (0, 255, 0, 128)  # 半透明綠色
+                text_color = COLOR_SAFE_GREEN  # 綠色
+                bg_color = COLOR_SAFE_GREEN + (ALPHA_SEMI_TRANSPARENT,)  # 半透明綠色
                 result_text = "✅ 安全"
             
             # 計算文字位置
@@ -96,14 +103,14 @@ class ImageService:
             text_height = font_size
             
             # 在圖片左上角繪製背景框
-            padding = 10
+            padding = UI_PADDING
             rect_coords = [
                 (padding, padding),
                 (padding + text_width + padding * 2, padding + text_height + padding * 2)
             ]
             
             # 繪製半透明背景
-            overlay = Image.new('RGBA', img.size, (255, 255, 255, 0))
+            overlay = Image.new('RGBA', img.size, COLOR_WHITE + (0,))
             overlay_draw = ImageDraw.Draw(overlay)
             overlay_draw.rectangle(rect_coords, fill=bg_color)
             img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
@@ -119,7 +126,7 @@ class ImageService:
             prob_text = f"火災: {p_fire:.1%} | 安全: {p_no:.1%}"
             prob_y = padding * 3 + text_height
             draw.text((padding * 2, prob_y), prob_text, 
-                     fill=(255, 255, 255), font=font)
+                     fill=COLOR_WHITE, font=font)
             
             return img
             
@@ -127,7 +134,7 @@ class ImageService:
             logger.error(f"添加標註時發生錯誤: {e}")
             return img
     
-    def resize_image(self, image_path: str, max_size: Tuple[int, int] = (1024, 1024)) -> str:
+    def resize_image(self, image_path: str, max_size: Tuple[int, int] = IMAGE_MAX_SIZE) -> str:
         """
         調整圖片大小
         
@@ -153,7 +160,7 @@ class ImageService:
             resized_path = f"{base_name}_resized{ext}"
             
             # 保存調整後的圖片
-            img.save(resized_path, quality=95)
+            img.save(resized_path, quality=IMAGE_QUALITY_HIGH)
             
             logger.info(f"圖片調整完成: {resized_path}")
             return resized_path
@@ -185,14 +192,14 @@ class ImageService:
                 'mode': img.mode,
                 'format': img.format,
                 'file_size': file_size,
-                'file_size_mb': round(file_size / (1024 * 1024), 2)
+                'file_size_mb': round(file_size / BYTES_TO_MB, 2)
             }
             
         except Exception as e:
             logger.error(f"獲取圖片資訊時發生錯誤: {e}")
             return None
     
-    def cleanup_old_images(self, max_age_hours: int = 24, max_files: int = 100):
+    def cleanup_old_images(self, max_age_hours: int = IMAGE_CLEANUP_MAX_AGE_HOURS, max_files: int = IMAGE_CLEANUP_MAX_FILES):
         """
         清理舊圖片檔案
         
@@ -224,13 +231,19 @@ class ImageService:
             jpeg_path = f"{base_name}.jpg"
             
             # 保存為 JPEG
-            img.save(jpeg_path, 'JPEG', quality=85, optimize=True)
+            img.save(jpeg_path, 'JPEG', quality=IMAGE_QUALITY_MEDIUM, optimize=True)
             
             logger.info(f"圖片轉換完成: {jpeg_path}")
             return jpeg_path
             
+        except IOError as e:
+            logger.error(f"圖片讀寫錯誤: {e}")
+            return image_path
+        except ValueError as e:
+            logger.error(f"圖片格式錯誤: {e}")
+            return image_path
         except Exception as e:
-            logger.error(f"轉換圖片格式時發生錯誤: {e}")
+            logger.error(f"轉換圖片格式時發生意外錯誤: {e}")
             return image_path
 
 # 全域圖片服務實例

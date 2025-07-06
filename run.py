@@ -22,15 +22,19 @@ def check_port(host, port):
         result = sock.connect_ex((host, port))
         sock.close()
         return result == 0  # 0 表示端口被佔用
-    except:
+    except socket.error:
         return False
 
 def get_process_using_port(port):
     """獲取佔用指定端口的進程 PID"""
     try:
-        # 使用 netstat 查找佔用端口的進程
-        cmd = f"netstat -tulpn 2>/dev/null | grep :{port}"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        # 使用 netstat 查找佔用端口的進程（更安全的方式）
+        result = subprocess.run(
+            ['netstat', '-tulpn'], 
+            capture_output=True, 
+            text=True,
+            stderr=subprocess.DEVNULL
+        )
         
         if result.returncode == 0 and result.stdout:
             lines = result.stdout.strip().split('\n')
@@ -84,12 +88,15 @@ def auto_handle_port_conflict(host, port, max_retries=3):
             
             # 獲取進程信息
             try:
-                cmd = f"ps -p {pid} -o pid,ppid,cmd --no-headers"
-                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                result = subprocess.run(
+                    ['ps', '-p', str(pid), '-o', 'pid,ppid,cmd', '--no-headers'],
+                    capture_output=True,
+                    text=True
+                )
                 if result.returncode == 0:
                     process_info = result.stdout.strip()
                     print(f"📋 進程信息: {process_info}")
-            except:
+            except subprocess.SubprocessError:
                 pass
             
             print(f"💀 自動終止進程 {pid}...")
@@ -144,7 +151,7 @@ except ImportError as e:
     sys.exit(1)
 
 if __name__ == '__main__':
-    host = '127.0.0.1'
+    host = os.environ.get('HOST', '127.0.0.1')
     port = int(os.environ.get('PORT', 5002))
     
     print(f"📍 準備啟動於: http://{host}:{port}")

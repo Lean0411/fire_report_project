@@ -12,6 +12,12 @@ import openai
 
 from config.settings import Config
 from config.logging_config import get_logger
+from config.constants import (
+    OPENAI_MAX_TOKENS, OPENAI_TEMPERATURE,
+    OLLAMA_MAX_TOKENS, OLLAMA_TEMPERATURE,
+    AI_REQUEST_TIMEOUT, AI_IMAGE_MAX_DIMENSION,
+    IMAGE_QUALITY_MEDIUM
+)
 from utils.text_utils import filter_refusal_responses
 
 logger = get_logger(__name__)
@@ -121,8 +127,8 @@ class AIService:
             response = openai.chat.completions.create(
                 model=model,
                 messages=messages,
-                max_tokens=1000,
-                temperature=0.7
+                max_tokens=OPENAI_MAX_TOKENS,
+                temperature=OPENAI_TEMPERATURE
             )
             
             content = response.choices[0].message.content
@@ -136,8 +142,14 @@ class AIService:
             logger.info(f"OpenAI 成功回應，內容長度：{len(filtered_content)} 字元")
             return filtered_content
             
+        except openai.APIError as e:
+            logger.error(f"OpenAI API 錯誤: {str(e)[:200]}")
+            return self._generate_fallback_response()
+        except openai.APITimeoutError as e:
+            logger.error(f"OpenAI API 超時: {str(e)[:200]}")
+            return self._generate_fallback_response()
         except Exception as e:
-            logger.error(f"OpenAI API 呼叫失敗: {str(e)[:200]}")
+            logger.error(f"OpenAI 服務意外錯誤: {str(e)[:200]}")
             return self._generate_fallback_response()
     
     def call_ollama_gemma(self, prompt: str, image_path: Optional[str] = None) -> str:
@@ -177,11 +189,11 @@ class AIService:
                         "content": prompt
                     }
                 ],
-                "max_tokens": 500,
-                "temperature": 0.7
+                "max_tokens": OLLAMA_MAX_TOKENS,
+                "temperature": OLLAMA_TEMPERATURE
             }
             
-            response = requests.post(url, json=data, headers=headers, timeout=30)
+            response = requests.post(url, json=data, headers=headers, timeout=AI_REQUEST_TIMEOUT)
             response.raise_for_status()
             
             result = response.json()
@@ -218,13 +230,13 @@ class AIService:
             img = PILImage.open(image_path).convert('RGB')
             
             # 調整圖片大小以符合 OpenAI 要求 (最大 2048x2048)
-            max_size = 2048
+            max_size = AI_IMAGE_MAX_DIMENSION
             if img.width > max_size or img.height > max_size:
                 img.thumbnail((max_size, max_size), PILImage.Resampling.LANCZOS)
             
             # 保存為臨時 JPEG 檔案
             with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as temp_file:
-                img.save(temp_file.name, 'JPEG', quality=85)
+                img.save(temp_file.name, 'JPEG', quality=IMAGE_QUALITY_MEDIUM)
                 temp_path = temp_file.name
             
             # 讀取並編碼圖片
